@@ -1,0 +1,14 @@
+
+
+
+
+
+.build/uno/src/orc/orc.cpp : src/orc/orc.ino
+	@mkdir -p .build/uno/src/orc
+	@echo [93msrc/orc/orc.ino[0m
+	@/usr/local/Cellar/ino/0.3.6/libexec/bin/ino preproc  -o $@ $^
+
+
+all : .build/uno/src/orc/orc.cpp
+	@true
+
