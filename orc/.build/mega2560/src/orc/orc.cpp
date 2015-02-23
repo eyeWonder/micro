@@ -163,6 +163,26 @@ void dancer() { // first of the reindeer
     if (Serial.available() && (bite = Serial.read())) {
         color(RESET); //should become superfluous, remove.
         gabber(bite);
+
+        // Read
+        if (bite == ' ' || bite == ',') {
+            is_cha = SPAZ;
+        }
+        if (('0' <= bite) && (bite <= '9')) {
+            is_cha = NUM;
+            color(CYAN);
+        }
+        if (rune(bite)) {
+            is_cha = RUNE;
+            tail = ! head;
+        }
+        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
+            is_cha = LETTER;
+            tail = ! head;
+        }
+        if (is_cha == RUNE || (was_cha == RUNE && is_cha == LETTER && !head)) {
+            color(GREEN);
+        }
         switch(bite) {
         case '(' :
             is_cha = PEL;
@@ -192,24 +212,8 @@ void dancer() { // first of the reindeer
             Serial.print("\r\n");
             break;
         }
-        if (bite == ' ' || bite == ',') {
-            is_cha = SPAZ;
-        }
-        if (('0' <= bite) && (bite <= '9')) {
-            is_cha = NUM;
-            color(CYAN);
-        }
-        if (rune(bite)) {
-            is_cha = RUNE;
-            tail = ! head;
-        }
-        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
-            is_cha = LETTER;
-            tail = ! head;
-        }
-        if (is_cha == RUNE || (was_cha == RUNE && is_cha == LETTER && !head)) {
-            color(GREEN);
-        }
+
+        // Report
         if (is_cha == RUNE && was_cha == LETTER && !head) {
             // backup, recolor, print one from gab.
             Serial.print("\33[D"); // generalize jump command
@@ -217,19 +221,20 @@ void dancer() { // first of the reindeer
             Serial.print(char(gab[gibber-1]));
         }
 
-        if (state == CAR) {
+        if (state == CAR && (is_cha == LETTER || RUNE)) {
             Serial.print("\33[4m");
         } 
-        // Serial.print(bite); faster
+            // Serial.print(bite); faster
         Serial.print(char(gab[gibber])); //keeps us honest
+
+    // Setup 
         if (state == CAR && !head) { 
-        Serial.print("\33[0m"); 
+            Serial.print("\33[0m"); 
             state = CDR;
         }
-        //Serial.print(head);
-        // setup next loop 
         was_cha = is_cha;
         head = tail ;
+    // Loop
     }
 }
 

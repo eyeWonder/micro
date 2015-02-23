@@ -2,8 +2,8 @@
 #ino clean
 
 ino build -m leonardo
-ino build -m mega2560
-ino build -m uno
+#ino build -m mega2560
+#ino build -m uno
 
 until ino upload -m leonardo
 do 
