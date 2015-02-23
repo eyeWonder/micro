@@ -41,7 +41,8 @@ const char CLR[] = "\33[30m"; // 7 byte - not aligned
 
 char bracecount = 0; 
 unsigned char state = 0;             // reuse aggressively
-unsigned char gab[GABMAX+1];         // we can freeze it to EEPROM when it spills. 
+unsigned char gab[GABMAX];         // we can freeze it to EEPROM when it spills. 
+char gibber = 0;
 bool was_glyph = false; 
 
 bool online = false ; // useless replace with state
@@ -61,11 +62,10 @@ static void cheer() { // detects the Cheer; make async
   char bite;
   if (Serial.available() && (bite = Serial.read())) {
     switch(bite) {
- //      case 'W' : state = 1 ; break;
- //      case '@' : state == 1? state = 2 : state = 0; break;
- //      case 'g' : state == 2? state = 3 : state = 0; break;
-       case '!' : online = true ; 
- //: state == 3? online = true : state = 0; // falls thru
+       case 'W' : state = 1 ; break;
+       case '@' : state == 1? state = 2 : state = 0; break;
+       case 'g' : state == 2? state = 3 : state = 0; break;
+       case '!' : state == 3? online = true : state = 0; // falls thru
        default  : state = 0;        
     }
   }
@@ -100,11 +100,11 @@ static void putdec( int16_t n ) {
 }
 
 static void gabber(char front) {
-    if (gab[0] < GABMAX) {
-      gab[++gab[0]] = front;
+    if (gibber < GABMAX) {
+      gab[gibber] = front;
     } else {
     //  color(RED); Serial.print('*'); color(RESET);
-      gab[0] = 1;
+      gibber = 1;
       gab[1] = front;
    }
 }
@@ -153,11 +153,11 @@ void dancer() { // first of the reindeer
       // backup, recolor, print one from gab.
       Serial.print("\33[D"); // generalize
       color(GREEN);
-      Serial.print(char(gab[gab[0]-1]));      
+      Serial.print(char(gab[gibber-1]));      
     }
     was_glyph = is_glyph;
     Serial.print(bite); 
-    // Serial.print(char(gab[gab[0]])); should be same
+    // Serial.print(char(gab[gibber])); should be same
   }
 }
 
@@ -169,7 +169,7 @@ void setup() {
 }
 void loop() {
   // if there's any serial available, read it:
-    if (!online) { cheer(); }
+    if (state < 4) { cheer(); }
     if (online) {
         if (state == 0) {
           Serial.print("@rk!\r\n(");

@@ -8,17 +8,7 @@
 	@echo [93msrc/orc/orc.ino[0m
 	@/usr/local/Cellar/ino/0.3.6/libexec/bin/ino preproc  -o $@ $^
 
-.build/uno/src/query/ardcosts/ardcosts.cpp : src/query/ardcosts/ardcosts.ino
-	@mkdir -p .build/uno/src/query/ardcosts
-	@echo [93msrc/query/ardcosts/ardcosts.ino[0m
-	@/usr/local/Cellar/ino/0.3.6/libexec/bin/ino preproc  -o $@ $^
 
-.build/uno/src/query/tricketcosts/tricketcosts.cpp : src/query/tricketcosts/tricketcosts.ino
-	@mkdir -p .build/uno/src/query/tricketcosts
-	@echo [93msrc/query/tricketcosts/tricketcosts.ino[0m
-	@/usr/local/Cellar/ino/0.3.6/libexec/bin/ino preproc  -o $@ $^
-
-
-all : .build/uno/src/orc/orc.cpp .build/uno/src/query/ardcosts/ardcosts.cpp .build/uno/src/query/tricketcosts/tricketcosts.cpp
+all : .build/uno/src/orc/orc.cpp
 	@true
 
