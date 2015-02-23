@@ -23,9 +23,12 @@
 #define NUM        4
 #define PER        5
 #define SPAZ       6
+/*
+typedef slot {  // holds userdata
 
-
-const unsigned char HI[] = "@rk!";
+}
+*/
+const char HI[] = "@rk!";
 
 const char CLR[] = "\33[30m"; // 7 byte - not aligned
 
@@ -33,7 +36,7 @@ char bracecount = 0;
 unsigned char state = 0;
 long pad = 45;
 unsigned char gab[GABMAX];         // we can freeze it to EEPROM when it spills.
-char gibber = -1;
+char gibber = 0;
 char was_cha = 0;
 bool head = true;
 
@@ -72,6 +75,8 @@ static void cheer() { // detects the Cheer; make async
 }
 
 static void putdec( int16_t n ) {
+    // shamelessly stolen from
+    // http://www.piclist.com/techref/language/ccpp/convertbase.htm
     unsigned char d4, d3, d2, d1, d0, q;
     if (n < 0) {
         Serial.print( '-' );
@@ -137,7 +142,7 @@ static bool rune(char cha) {
 
 void dancer() { // first of the reindeer
     char bite;
-    bool tail = true;
+    bool tail = true; // the next character is a head by default
     char is_cha = 0;
     if (Serial.available() && (bite = Serial.read())) {
         color(RESET); //should become superfluous, remove.
@@ -163,7 +168,7 @@ void dancer() { // first of the reindeer
             is_cha = SPAZ;
             Serial.print("\r\n"); //jumpcall
             for (byte i = 0 ; i < gibber; i++) {
-                Serial.print(char(gab[i])); //diagnostic         
+                Serial.print(char(gab[i])); //diagnostic
             }
             gibber = 0;
             gab[0] = '(' ; // now there's a dirty hack
@@ -182,8 +187,8 @@ void dancer() { // first of the reindeer
             tail = ! head;
         }
         if (('A' < bite) && (bite <'z') && is_cha != RUNE) {
-          is_cha = LETTER;
-          tail = ! head;
+            is_cha = LETTER;
+            tail = ! head;
         }
         if (is_cha == RUNE || (was_cha == RUNE && is_cha == LETTER && !head)) {
             color(GREEN);
@@ -195,16 +200,16 @@ void dancer() { // first of the reindeer
             Serial.print(char(gab[gibber-1]));
         }
 
-        if (head) {
+        if (!head) {
             Serial.print("\33[4m");
         }
         // Serial.print(bite); faster
         Serial.print(char(gab[gibber])); //keeps us honest
-        if (head) {
+        if (!head) {
             Serial.print("\33[0m");
         }
         //Serial.print(head);
-        // setup next loop
+        // setup next loop 
         was_cha = is_cha;
         head = tail ;
     }
@@ -212,20 +217,21 @@ void dancer() { // first of the reindeer
 
 void setup() {
     // setup µlisp
-    gab[0] = '\0';
+    gab[0] = '(';
     state = 0;
     Serial.begin(9600); // helps with resets?
     Serial.print(pad); //remove
 }
 void loop() {
     // if there's any serial available, read it:
-    if (state < 4) {
+    if (state < 4 && online == false) { // state should be negative when not interacting
         cheer();
     }
     if (online) {
         if (state == 0) {
-            Serial.print("@rk!\r\n(");
-            state = 5;
+            Serial.print(HI);
+            Serial.print("\r\n(");
+            state = 1;
         } else {
             dancer();
         }
