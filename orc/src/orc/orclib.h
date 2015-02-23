@@ -1,3 +1,4 @@
+/*
 #define PARSE      0
 #define LAMBDA     1
 #define STRING     2
@@ -173,3 +174,4 @@ void OrcRun() {
     }
   
 }
+*/

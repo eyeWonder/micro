@@ -1,10 +1,4 @@
-#define PARSE      1
-#define LAMBDA     2
-#define STRING     3
-#define ESC        4
-#define COMMENT    5
-#define JANK       6
-
+// colors are semantic.
 #define BLACK      0        // doubt I'll use this...
 #define RED        1
 #define GREEN      2
@@ -17,12 +11,24 @@
 
 #define GABMAX     64
 
-#define LETTER     1
+//Phonemes
+#define LETTER     1        // pair letter and rune
 #define RUNE       2
 #define PEL        3
 #define NUM        4
 #define PER        5
 #define SPAZ       6
+
+//Parsemes
+//overload onto phonemes and mask. 
+#define CAR        16       // pair car and cdr
+#define CDR        17 
+#define NUMBER     18
+#define STRING     19
+#define COMMENT    20
+#define ESCAPE     21
+#define JANK       22
+
 /*
 typedef slot {  // holds userdata
 
@@ -30,12 +36,12 @@ typedef slot {  // holds userdata
 */
 const char HI[] = "@rk!";
 
-const char CLR[] = "\33[30m"; // 7 byte - not aligned
+const char CLR[] = "\33[30m"; 
 
 char bracecount = 0;
 unsigned char state = 0;
 long pad = 45;
-unsigned char gab[GABMAX];         // we can freeze it to EEPROM when it spills.
+unsigned char gab[GABMAX];         
 char gibber = 0;
 char was_cha = 0;
 bool head = true;
@@ -52,8 +58,7 @@ static void color(char foreground) { // prints a foreground color, for now
     Serial.print(clr);
 }
 
-static void cheer() { // detects the Cheer; make async
-//   online = Serial.find("W@g!");
+static void cheer() { // detects the Cheer
     char bite;
     if (Serial.available() && (bite = Serial.read())) {
         switch(bite) {
@@ -150,6 +155,7 @@ void dancer() { // first of the reindeer
         switch(bite) {
         case '(' :
             is_cha = PEL;
+            state = CAR;
             if (++bracecount > 0) {
                 color(bracecount % 8 + 1);
             }
@@ -186,7 +192,7 @@ void dancer() { // first of the reindeer
             is_cha = RUNE;
             tail = ! head;
         }
-        if (('A' < bite) && (bite <'z') && is_cha != RUNE) {
+        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
             is_cha = LETTER;
             tail = ! head;
         }
@@ -200,13 +206,14 @@ void dancer() { // first of the reindeer
             Serial.print(char(gab[gibber-1]));
         }
 
-        if (!head) {
+        if (state == CAR) {
             Serial.print("\33[4m");
-        }
+        } 
         // Serial.print(bite); faster
         Serial.print(char(gab[gibber])); //keeps us honest
-        if (!head) {
-            Serial.print("\33[0m");
+        if (state == CAR && !head) { 
+        Serial.print("\33[0m"); 
+            state = CDR;
         }
         //Serial.print(head);
         // setup next loop 
@@ -231,7 +238,7 @@ void loop() {
         if (state == 0) {
             Serial.print(HI);
             Serial.print("\r\n(");
-            state = 1;
+            state = CAR;
         } else {
             dancer();
         }

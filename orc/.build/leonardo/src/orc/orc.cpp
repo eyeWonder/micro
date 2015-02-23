@@ -1,10 +1,15 @@
-#define PARSE      1
-#define LAMBDA     2
-#define STRING     3
-#define ESC        4
-#define COMMENT    5
-#define JANK       6
+#include <Arduino.h>
 
+static void color(char foreground);
+static void cheer();
+static void putdec( int16_t n );
+static void gabber(char front);
+static bool rune(char cha);
+void dancer();
+void setup();
+void loop();
+#line 1 "src/orc/orc.ino"
+// colors are semantic.
 #define BLACK      0        // doubt I'll use this...
 #define RED        1
 #define GREEN      2
@@ -17,23 +22,38 @@
 
 #define GABMAX     64
 
-#define LETTER     1
+//Phonemes
+#define LETTER     1        // pair letter and rune
 #define RUNE       2
 #define PEL        3
 #define NUM        4
 #define PER        5
 #define SPAZ       6
 
+//Parsemes
+//overload onto phonemes and mask. 
+#define CAR        16       // pair car and cdr
+#define CDR        17 
+#define NUMBER     18
+#define STRING     19
+#define COMMENT    20
+#define ESCAPE     21
+#define JANK       22
 
-const unsigned char HI[] = "@rk!";
+/*
+typedef slot {  // holds userdata
 
-const char CLR[] = "\33[30m"; // 7 byte - not aligned
+}
+*/
+const char HI[] = "@rk!";
+
+const char CLR[] = "\33[30m"; 
 
 char bracecount = 0;
 unsigned char state = 0;
 long pad = 45;
-unsigned char gab[GABMAX];         // we can freeze it to EEPROM when it spills.
-char gibber = -1;
+unsigned char gab[GABMAX];         
+char gibber = 0;
 char was_cha = 0;
 bool head = true;
 
@@ -49,8 +69,7 @@ static void color(char foreground) { // prints a foreground color, for now
     Serial.print(clr);
 }
 
-static void cheer() { // detects the Cheer; make async
-//   online = Serial.find("W@g!");
+static void cheer() { // detects the Cheer
     char bite;
     if (Serial.available() && (bite = Serial.read())) {
         switch(bite) {
@@ -72,6 +91,8 @@ static void cheer() { // detects the Cheer; make async
 }
 
 static void putdec( int16_t n ) {
+    // shamelessly stolen from
+    // http://www.piclist.com/techref/language/ccpp/convertbase.htm
     unsigned char d4, d3, d2, d1, d0, q;
     if (n < 0) {
         Serial.print( '-' );
@@ -145,6 +166,7 @@ void dancer() { // first of the reindeer
         switch(bite) {
         case '(' :
             is_cha = PEL;
+            state = CAR;
             if (++bracecount > 0) {
                 color(bracecount % 8 + 1);
             }
@@ -163,7 +185,7 @@ void dancer() { // first of the reindeer
             is_cha = SPAZ;
             Serial.print("\r\n"); //jumpcall
             for (byte i = 0 ; i < gibber; i++) {
-                Serial.print(char(gab[i])); //diagnostic         
+                Serial.print(char(gab[i])); //diagnostic
             }
             gibber = 0;
             gab[0] = '(' ; // now there's a dirty hack
@@ -181,9 +203,9 @@ void dancer() { // first of the reindeer
             is_cha = RUNE;
             tail = ! head;
         }
-        if (('A' < bite) && (bite <'z') && is_cha != RUNE) {
-          is_cha = LETTER;
-          tail = ! head;
+        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
+            is_cha = LETTER;
+            tail = ! head;
         }
         if (is_cha == RUNE || (was_cha == RUNE && is_cha == LETTER && !head)) {
             color(GREEN);
@@ -195,16 +217,17 @@ void dancer() { // first of the reindeer
             Serial.print(char(gab[gibber-1]));
         }
 
-        if (!head) {
+        if (state == CAR) {
             Serial.print("\33[4m");
-        }
+        } 
         // Serial.print(bite); faster
         Serial.print(char(gab[gibber])); //keeps us honest
-        if (!head) {
-            Serial.print("\33[0m");
+        if (state == CAR && !head) { 
+        Serial.print("\33[0m"); 
+            state = CDR;
         }
         //Serial.print(head);
-        // setup next loop
+        // setup next loop 
         was_cha = is_cha;
         head = tail ;
     }
@@ -212,20 +235,21 @@ void dancer() { // first of the reindeer
 
 void setup() {
     // setup µlisp
-    gab[0] = '\0';
+    gab[0] = '(';
     state = 0;
     Serial.begin(9600); // helps with resets?
     Serial.print(pad); //remove
 }
 void loop() {
     // if there's any serial available, read it:
-    if (state < 4) {
+    if (state < 4 && online == false) { // state should be negative when not interacting
         cheer();
     }
     if (online) {
         if (state == 0) {
-            Serial.print("@rk!\r\n(");
-            state = 5;
+            Serial.print(HI);
+            Serial.print("\r\n(");
+            state = CAR;
         } else {
             dancer();
         }
