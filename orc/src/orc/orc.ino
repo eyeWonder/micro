@@ -213,6 +213,10 @@ void dancer() { // first of the reindeer
             gab[0] = '(' ; // now there's a dirty hack
             Serial.print("\r\n");
             break;
+        case '\127' : // delete key
+            is_cha = gab[--gibber] ;
+            state = CAR ; //Fuck: copy gab forward by one and reparse using gab.
+            Serial.print(">>>>");
         }
 
         // Report

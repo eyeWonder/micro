@@ -216,6 +216,7 @@ void dancer() { // first of the reindeer
             break;
         case '\r' :
             is_cha = SPACE;
+            state = CAR;
             Serial.print("\r\n"); //jumpcall
             for (byte i = 0 ; i < gibber; i++) {
                 Serial.print(char(gab[i])); //diagnostic
@@ -224,6 +225,10 @@ void dancer() { // first of the reindeer
             gab[0] = '(' ; // now there's a dirty hack
             Serial.print("\r\n");
             break;
+        case '\127' : // delete key
+            is_cha = gab[--gibber] ;
+            state = CAR ; //Fuck: copy gab forward by one and reparse using gab.
+            Serial.print("\33[D \33[D"); // generalize jump command
         }
 
         // Report
@@ -236,9 +241,11 @@ void dancer() { // first of the reindeer
 
         if (state == CAR && (is_cha != PEL)) {
             Serial.print("\33[4m"); // underline
+            state = CDR;
         }
-        if (was_cha == NUMBER && is_cha != NUMBER) {
+        if (was_cha == NUMBER && is_cha != NUMBER && !head) {
             Serial.print("\33[0m");
+            state = CDR;
         }
         // Serial.print(bite); faster
         Serial.print(char(gab[gibber])); //keeps us honest

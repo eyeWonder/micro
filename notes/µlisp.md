@@ -16,11 +16,37 @@ Each rune is a parsing engine with particular rules associated with it. Some, no
 
 ###Specifics
 
-This whole thing is a dirty ASCII hack.
 
-The run of characters `"#$%&'()` all have the meaning that they may not be suffixed. Adding `!` would remove a special case. `"` is for strings, `#` is ports, `$` are implicit slots, `%` are eeprom locations, `&` is special-cased because of bitwisdom, `'` is quotation, and `()` are our forms.
+####May not begin or end a symbol
 
-We call a character short if it may not suffix a symbol, and bare if it may not combine in a symbol. At least `"#$';` are short, and `(){}[]` are bare. 
+`space`, `,` `\n`
+
+`(` `)` `"` `;`
+
+###May not begin a symbol
+
+`#` `$` `%` `'` `{` `[`
+
+###May not end a symbol
+
+`}` `]`
+
+###May be found in any position
+
+``~`@^&*_-+=|\:<>.?/``  
+
+So we have 19 symbols which combine two ways with 52 letters: 19 * 52 * 2 = 1976
+
+Plus the double and single forms of the symbols: 1976 + 104 = 2090
+
+Plus the combinations with each other: 19 * 18 * 2 = 684
+
+Plus eight symbols which combine one way each with 52 letters: 8 * 52 = 416
+
+The dual forms and singles make sixteen more, 432 + 2090 + 684 = 3206 library functions available. 
+
+Making `{[]}` bare would subtract a few hundred of those, but that would leave no user-extensible brace pairs, which would be unfortunate. I may compromise and make them rune-only combiners, so `-{` is valid but `A{` is not. This would avoid collision with userspace. I like this the more I think about it, it means there are 19 of each brace available since we can't possibly allow `}{` as a symbol in a sane language. The computer wouldn't mind...
+
 
 ####Consequences:
 
