@@ -4,6 +4,7 @@ static void color(char foreground);
 static void cheer();
 static void putdec( int16_t n );
 static void gabber(char front);
+static void herpderp(char front);
 static bool rune(char cha);
 void dancer();
 void setup();
@@ -20,20 +21,21 @@ void loop();
 #define WHITE      7        // or this
 #define RESET      9        // preferring this.
 
-#define GABMAX     64
+#define GABMAX     64       // not found in blitzen
+#define DRPMAX     64
 
 //Phonemes
 #define LETTER     1        // pair letter and rune
 #define RUNE       2
 #define PEL        3
-#define NUM        4
+#define NUMBER     4
 #define PER        5
-#define SPAZ       6
+#define SPACE      6
 
 //Parsemes
-//overload onto phonemes and mask. 
+//overload onto phonemes and mask.
 #define CAR        16       // pair car and cdr
-#define CDR        17 
+#define CDR        17
 #define NUMBER     18
 #define STRING     19
 #define COMMENT    20
@@ -42,18 +44,19 @@ void loop();
 
 /*
 typedef slot {  // holds userdata
-
+ // union type, 32 bits
+ // with type table, one bit per
 }
 */
 const char HI[] = "@rk!";
-
-const char CLR[] = "\33[30m"; 
+const char CLR[] = "\33[30m";
 
 char bracecount = 0;
-unsigned char state = 0;
-long pad = 45;
-unsigned char gab[GABMAX];         
+char state = 0;
+char gab[GABMAX];
+char drp[DRPMAX];
 char gibber = 0;
+char derp = 0;
 char was_cha = 0;
 bool head = true;
 
@@ -139,15 +142,25 @@ static void gabber(char front) {
     }
 }
 
+static void herpderp(char front) {
+    if (derp < DRPMAX-1) {
+        drp[++derp] = front;
+    } else {
+        derp   = 1;
+        drp[0] = drp[DRPMAX-1];
+        drp[1] = front;
+    }
+}
+
 static bool rune(char cha) {
     //determines a glyph.
     if ((32 < cha) && (cha < 48) && !(cha == '(' || cha == ')')) {
         return true;
     }
-    if ((90 < cha) && (cha < 97)) {
+    if ((90 < cha)  && (cha < 97))  {
         return true;
     }
-    if ((57 < cha) && (cha < 65)) {
+    if ((57 < cha)  && (cha < 65))  {
         return true;
     }
     if ((122 < cha) && (cha < 127)) {
@@ -161,15 +174,14 @@ void dancer() { // first of the reindeer
     bool tail = true; // the next character is a head by default
     char is_cha = 0;
     if (Serial.available() && (bite = Serial.read())) {
-        color(RESET); //should become superfluous, remove.
         gabber(bite);
-
+        herpderp(bite);
         // Read
         if (bite == ' ' || bite == ',') {
-            is_cha = SPAZ;
+            is_cha = SPACE;
         }
         if (('0' <= bite) && (bite <= '9')) {
-            is_cha = NUM;
+            is_cha = NUMBER;
             color(CYAN);
         }
         if (rune(bite)) {
@@ -179,6 +191,7 @@ void dancer() { // first of the reindeer
         if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
             is_cha = LETTER;
             tail = ! head;
+            color(RESET);
         }
         if (is_cha == RUNE || (was_cha == RUNE && is_cha == LETTER && !head)) {
             color(GREEN);
@@ -202,7 +215,7 @@ void dancer() { // first of the reindeer
             }
             break;
         case '\r' :
-            is_cha = SPAZ;
+            is_cha = SPACE;
             Serial.print("\r\n"); //jumpcall
             for (byte i = 0 ; i < gibber; i++) {
                 Serial.print(char(gab[i])); //diagnostic
@@ -221,32 +234,36 @@ void dancer() { // first of the reindeer
             Serial.print(char(gab[gibber-1]));
         }
 
-        if (state == CAR && (is_cha == LETTER || RUNE)) {
-            Serial.print("\33[4m");
-        } 
-            // Serial.print(bite); faster
+        if (state == CAR && (is_cha != PEL)) {
+            Serial.print("\33[4m"); // underline
+        }
+        if (was_cha == NUMBER && is_cha != NUMBER) {
+            Serial.print("\33[0m");
+        }
+        // Serial.print(bite); faster
         Serial.print(char(gab[gibber])); //keeps us honest
 
-    // Setup 
-        if (state == CAR && !head) { 
-            Serial.print("\33[0m"); 
+        // Setup
+        if ((state == CAR && !head)  ) {
+            Serial.print("\33[0m"); // clear 
             state = CDR;
         }
+
         was_cha = is_cha;
         head = tail ;
-    // Loop
+        // Loop
     }
 }
 
 void setup() {
     // setup µlisp
     gab[0] = '(';
+    drp[0] = '(';
     state = 0;
-    Serial.begin(9600); // helps with resets?
-    Serial.print(pad); //remove
+    Serial.begin(9600);
 }
+
 void loop() {
-    // if there's any serial available, read it:
     if (state < 4 && online == false) { // state should be negative when not interacting
         cheer();
     }
