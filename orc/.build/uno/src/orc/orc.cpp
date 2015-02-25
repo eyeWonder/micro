@@ -325,7 +325,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
             case '\r' :
                 is_cha = SPACE;
                 parseme = SYMBOL;
-                clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
                     Serial.print(char(gab[i])); //diagnostic
@@ -336,9 +335,17 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 Serial.print("\r\n");
                 break;
             case 127 :
-                gibber -= 2; // turn into a proper undo that corrects e.g. bracecount
+                --gibber; // turn into a proper undo that corrects e.g. bracecount
+                if (gab[gibber] == '(') {
+                    --bracecount;
+                }
+                if (gab[gibber] == ')') {
+                    ++bracecount;
+                }
+                --gibber;
                 Serial.print("\33[D \33[D");
                 goto chew;
+                break; // superfluous?
             }
         }
         switch(phoneme) {
@@ -361,12 +368,16 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 color((bracecount % 8)+1);
             }
             break;
+        case SPACE :
+            clear();
+            break;
         }
         /*        if (phoneme != PEL) {
                     Serial.print("λ");
                     clear();
                 }
         */
+        was_cha = is_cha;
         Serial.print(gab[gibber]);
 
 
