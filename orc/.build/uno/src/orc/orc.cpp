@@ -281,13 +281,15 @@ void dancer() { // first of the reindeer, 0.2
 // it sets up the gab and derp, determines semantics, and
 // moves forward.
 // dancer consumes one letter at a time.
+chew:
     char bite;
-    char is_cha = 0; // stage out, phoneme always tracks latest letter. 
+    char is_cha = 0; // stage out, phoneme always tracks latest letter.
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
-        herpderp(bite);
-        if (true) {    // parseme == symbol
-        if (('0' <= bite) && (bite <= '9')) {
+//     herpderp(bite);    // forget the derp for now
+parse:      // Djikstra forgive me. Knuth would understand.
+        if (true) {       // parseme == symbol
+            if (('0' <= bite) && (bite <= '9')) {
                 is_cha = NUMBER;
                 phoneme = DIGIT;
                 parseme = NUMBER;
@@ -298,11 +300,11 @@ void dancer() { // first of the reindeer, 0.2
                 phoneme = RUNE;
                 parseme = SYMBOL;
             }
-        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
-            is_cha = LETTER;
-            phoneme = LETTER;
-            parseme = SYMBOL;
-        }
+            if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
+                is_cha = LETTER;
+                phoneme = LETTER;
+                parseme = SYMBOL;
+            }
             switch(bite) {
             case '(' :
                 is_cha = PEL;
@@ -312,30 +314,31 @@ void dancer() { // first of the reindeer, 0.2
                 break;
             case ')' :
                 is_cha = PER;
-                phoneme = PEL;
+                phoneme = PER;
                 parseme = SYMBOL;
-                if (bracecount > 0) {
+                if (bracecount >= 0) {
                     --bracecount;
                 } else {
-                    bracecount = 0;
+                    bracecount = -1; // lower bound -1
                 }
                 break;
             case '\r' :
                 is_cha = SPACE;
                 parseme = SYMBOL;
+                clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
                     Serial.print(char(gab[i])); //diagnostic
                 }
                 gibber = 0;
                 gab[0] = '(' ; // now there's a dirty hack
-                lexeme = CAR + HEAD ;
+                lexeme = CAR + HEAD;
                 Serial.print("\r\n");
                 break;
-            case 127 : // delete key
-            //    is_cha = gab[--gibber] ;
-               Serial.print(">>>>");
-            break;
+            case 127 :
+                gibber -= 2; // turn into a proper undo that corrects e.g. bracecount
+                Serial.print("\33[D \33[D");
+                goto chew;
             }
         }
         switch(phoneme) {
@@ -352,13 +355,18 @@ void dancer() { // first of the reindeer, 0.2
             color(CYAN);
             break;
         case PER    :
-            color(((bracecount+1) % 8);
+            if (bracecount < 0) { // this is a syntax error, later.
+                color(RESET);
+            } else {
+                color((bracecount % 8)+1);
+            }
             break;
         }
-        if (phoneme != PEL) {
-      //      Serial.print("λ");
-      //      clear();
-        }
+        /*        if (phoneme != PEL) {
+                    Serial.print("λ");
+                    clear();
+                }
+        */
         Serial.print(gab[gibber]);
 
 
