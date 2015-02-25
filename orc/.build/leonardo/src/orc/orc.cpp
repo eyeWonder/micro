@@ -44,7 +44,7 @@ void loop();
 #define NUMBER     18
 #define STRING     19
 #define COMMENT    20
-#define ESCAPE     21
+#define ESCAPE     27
 #define JANK       22
 
 /*
@@ -282,22 +282,27 @@ void dancer() { // first of the reindeer, 0.2
 // moves forward.
 // dancer consumes one letter at a time.
     char bite;
-    bool tail = true; // the next character is a head by default
-    char is_cha = 0;
+    char is_cha = 0; // stage out, phoneme always tracks latest letter. 
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
         herpderp(bite);
         if (true) {    // parseme == symbol
+        if (('0' <= bite) && (bite <= '9')) {
+                is_cha = NUMBER;
+                phoneme = DIGIT;
+                parseme = NUMBER;
+                // goto top!
+            }
             if (rune(bite)) {
                 is_cha = RUNE;
                 phoneme = RUNE;
                 parseme = SYMBOL;
             }
-            if (('0' <= bite) && (bite <= '9')) {
-                is_cha = NUMBER;
-                phoneme = DIGIT;
-                parseme = NUMBER;
-            }
+        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
+            is_cha = LETTER;
+            phoneme = LETTER;
+            parseme = SYMBOL;
+        }
             switch(bite) {
             case '(' :
                 is_cha = PEL;
@@ -307,12 +312,12 @@ void dancer() { // first of the reindeer, 0.2
                 break;
             case ')' :
                 is_cha = PER;
-                phoneme = PEL;
+                phoneme = PER;
                 parseme = SYMBOL;
-                if (bracecount > 0) {
-                    --bracecount;
+                if (bracecount >= 0) { 
+                    --bracecount; 
                 } else {
-                    bracecount = 0;
+                    bracecount = -1; // lower bound -1
                 }
                 break;
             case '\r' :
@@ -327,9 +332,10 @@ void dancer() { // first of the reindeer, 0.2
                 lexeme = CAR + HEAD ;
                 Serial.print("\r\n");
                 break;
-            case '\127' : // delete key
+            case '\x7F' : // delete key
             //    is_cha = gab[--gibber] ;
-                Serial.print(">>>>");
+               Serial.print(">>>>");
+            break;
             }
         }
         switch(phoneme) {
@@ -346,13 +352,18 @@ void dancer() { // first of the reindeer, 0.2
             color(CYAN);
             break;
         case PER    :
-            color(bracecount % 8);
+            if (bracecount < 0) {
+                color(RESET);
+            } else {
+                color((bracecount % 8)+1);
+            }
             break;
         }
-        if (phoneme != PEL) {
+/*        if (phoneme != PEL) {
             Serial.print("λ");
             clear();
         }
+*/
         Serial.print(gab[gibber]);
 
 
