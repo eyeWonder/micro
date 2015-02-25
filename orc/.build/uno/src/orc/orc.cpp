@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 static void color(char foreground);
+static void clear();
 static void cheer();
 static void putdec( int16_t n );
 static void gabber(char front);
@@ -28,14 +29,18 @@ void loop();
 #define LETTER     1        // pair letter and rune
 #define RUNE       2
 #define PEL        3
-#define NUMBER     4
+#define DIGIT      4
 #define PER        5
 #define SPACE      6
 
+//Lexemes
+#define HEAD       8       // 
+#define TAIL       16
+#define CAR        32       // pair car and cdr
+#define CDR        64
+
 //Parsemes
-//overload onto phonemes and mask.
-#define CAR        16       // pair car and cdr
-#define CDR        17
+#define SYMBOL     17
 #define NUMBER     18
 #define STRING     19
 #define COMMENT    20
@@ -52,7 +57,10 @@ const char HI[] = "@rk!";
 const char CLR[] = "\33[30m";
 
 char bracecount = 0;
-char state = 0;
+char state = 0;                // online or not
+char phoneme = 0;              // type of letter detected
+char lexeme  = 0;              // place in symbol order.
+char parseme = 0;
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
@@ -70,6 +78,10 @@ static void color(char foreground) { // prints a foreground color, for now
     strcpy(clr,CLR);
     clr[3] = foreground + 48 ;
     Serial.print(clr);
+}
+
+static void clear() { // fold into comprehensive color printer
+    Serial.print("\33[0m");
 }
 
 static void cheer() { // detects the Cheer
@@ -169,6 +181,7 @@ static bool rune(char cha) {
     return false;
 }
 
+/*
 void dancer() { // first of the reindeer
     char bite;
     bool tail = true; // the next character is a head by default
@@ -228,7 +241,7 @@ void dancer() { // first of the reindeer
         case '\127' : // delete key
             is_cha = gab[--gibber] ;
             state = CAR ; //Fuck: copy gab forward by one and reparse using gab.
-            Serial.print("\33[D \33[D"); // generalize jump command
+            Serial.print(">>>>");
         }
 
         // Report
@@ -252,7 +265,7 @@ void dancer() { // first of the reindeer
 
         // Setup
         if ((state == CAR && !head)  ) {
-            Serial.print("\33[0m"); // clear 
+            Serial.print("\33[0m"); // clear
             state = CDR;
         }
 
@@ -260,8 +273,87 @@ void dancer() { // first of the reindeer
         head = tail ;
         // Loop
     }
-}
+} */
 
+void dancer() { // first of the reindeer, 0.2
+// let's try this again.
+// dancer is a parser.
+// it sets up the gab and derp, determines semantics, and
+// moves forward.
+// dancer consumes one letter at a time.
+    char bite;
+    bool tail = true; // the next character is a head by default
+    char is_cha = 0;
+    if (Serial.available() && (bite = Serial.read())) {
+        gabber(bite);
+        herpderp(bite);
+        if (parseme = SYMBOL) {
+            if (rune(bite)) {
+                is_cha = RUNE;
+                phoneme = RUNE;
+                parseme = SYMBOL;
+            }
+            if (('0' <= bite) && (bite <= '9')) {
+                is_cha = NUMBER;
+                phoneme = DIGIT;
+                parseme = NUMBER;
+            }
+            switch(bite) {
+            case '(' :
+                is_cha = PEL;
+                lexeme = CAR + HEAD;
+                ++bracecount;
+                break;
+            case ')' :
+                is_cha = PER;
+                parseme = SYMBOL;
+                if (bracecount > 0) {
+                    --bracecount;
+                } else {
+                    bracecount = 0;
+                }
+                break;
+            case '\r' :
+                is_cha = SPACE;
+                parseme = SYMBOL;
+                Serial.print("\r\n"); //jumpcall
+                for (byte i = 0 ; i < gibber; i++) {
+                    Serial.print(char(gab[i])); //diagnostic
+                }
+                gibber = 0;
+                gab[0] = '(' ; // now there's a dirty hack
+                lexeme = CAR + HEAD ;
+                Serial.print("\r\n");
+                break;
+            case '\127' : // delete key
+                is_cha = gab[--gibber] ;
+                Serial.print(">>>>");
+            }
+        }
+        switch(phoneme) {
+        case LETTER :
+            color(RESET);
+            break;
+        case RUNE   :
+            color(GREEN);
+            break;
+        case PEL    :
+            color(bracecount % 8);
+            break;
+        case DIGIT  :
+            color(CYAN);
+            break;
+        case PER    :
+            color(bracecount % 8);
+            break;
+        }
+        Serial.print("λ");
+        clear();
+        Serial.print(gab[gibber]);
+
+
+    }
+}
 void setup() {
     // setup µlisp
     gab[0] = '(';

@@ -39,11 +39,11 @@ So we have 19 symbols which combine two ways with 52 letters: 19 * 52 * 2 = 1976
 
 Plus the double and single forms of the symbols: 1976 + 104 = 2090
 
-Plus the combinations with each other: 19 * 18 * 2 = 684
+Plus the combinations with each other: 19 * 18  = 342
 
 Plus eight symbols which combine one way each with 52 letters: 8 * 52 = 416
 
-The dual forms and singles make sixteen more, 432 + 2090 + 684 = 3206 library functions available. 
+The dual forms and singles make sixteen more, 432 + 2090 + 342 = 2864 library functions available. 
 
 Making `{[]}` bare would subtract a few hundred of those, but that would leave no user-extensible brace pairs, which would be unfortunate. I may compromise and make them rune-only combiners, so `-{` is valid but `A{` is not. This would avoid collision with userspace. I like this the more I think about it, it means there are 19 of each brace available since we can't possibly allow `}{` as a symbol in a sane language. The computer wouldn't mind...
 
