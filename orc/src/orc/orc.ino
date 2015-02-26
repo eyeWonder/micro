@@ -49,7 +49,7 @@ char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
-bool head = true;           // head or tail of symbol
+bool head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
@@ -235,7 +235,8 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 gibber = -1;
                 Serial.print("\r\n\r\n");
                 break;
-            case 127 : // move to own function, protect against deletes past zero!
+            case 127 : // delete key
+            // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
                 if (gab[gibber] == '(') {
                     --bracecount;
@@ -246,7 +247,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 --gibber; // prior to last cha
                 Serial.print("\33[D \33[D");
                 goto chew;
-                break; // superfluous?
+                break; 
             }
             break;
         case NUMBER:
@@ -254,7 +255,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 parseme = SYMBOL;
                 goto parse;
             }
-            break; // not that it matters
+            break; 
         case STRING: // include escaping logic, for now, close on "
             if (phoneme == 0) {
                 phoneme = QUOTE;
@@ -266,7 +267,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 }
             }
             break;
-        }
+        } // ends switch(parseme)
         if ((parseme == SYMBOL) && (phoneme == LETTER || phoneme == RUNE)) {
             if (head) {
                 head = false;
@@ -319,7 +320,7 @@ report:
         }
 send_bite:
         if (is_cha != RUNE && is_cha != LETTER) {
-            head = false;
+       //     head = false;
         }
         if (head) {
             Serial.print("\33[4m");
