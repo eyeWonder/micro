@@ -211,12 +211,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
             if (rune(bite)) {
                 is_cha = RUNE;
                 phoneme = RUNE;
-                parseme = SYMBOL;
             }
             if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
                 is_cha = LETTER;
                 phoneme = LETTER;
-                parseme = SYMBOL;
             }
             switch(bite) {
             case '(' :
@@ -243,7 +241,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
             case '\r' :
                 is_cha = SPACE;
                 phoneme = SPACE;
-                parseme = 0;
                 clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
@@ -269,7 +266,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
         case NUMBER:
             if (!('0' <= bite) || !(bite <= '9')) {
                 parseme = SYMBOL;
-                lexeme = CDR; //remove, number CAR is an error
                 goto parse;
             }
             break; // not that it matters
@@ -280,7 +276,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 if (bite == '"') {
                     parseme = SYMBOL;
                     color(YELLOW);
-                    lexeme = CDR; //remove, string CAR is an error
                     goto send_bite;
                 }
             }
@@ -293,7 +288,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
-        if(phoneme != LETTER && phoneme != RUNE) {
+        if(parseme != SYMBOL) {
             lexeme = CDR;
         }
 report:

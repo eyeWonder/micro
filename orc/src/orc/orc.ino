@@ -52,8 +52,8 @@ char parseme = SYMBOL;              // parser at work
 bool head = true;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
-char gibber = -1;
-char derp = -1;
+char gibber = 0;
+char derp = 0;
 char was_cha = 0;
 
 bool online = false ; // useless replace with state
@@ -197,12 +197,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
             if (rune(bite)) {
                 is_cha = RUNE;
                 phoneme = RUNE;
-                parseme = SYMBOL;
             }
             if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
                 is_cha = LETTER;
                 phoneme = LETTER;
-                parseme = SYMBOL;
             }
             switch(bite) {
             case '(' :
@@ -229,14 +227,13 @@ parse:      // Djikstra forgive me. Knuth would understand.
             case '\r' :
                 is_cha = SPACE;
                 phoneme = SPACE;
-                parseme = 0;
                 clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
                     Serial.print(char(gab[i])); //diagnostic
                 }
                 gibber = -1;
-                Serial.print("\r\n\n");
+                Serial.print("\r\n\r\n");
                 break;
             case 127 : // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
@@ -255,7 +252,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
         case NUMBER:
             if (!('0' <= bite) || !(bite <= '9')) {
                 parseme = SYMBOL;
-                lexeme = CDR; //remove, number CAR is an error
                 goto parse;
             }
             break; // not that it matters
@@ -266,7 +262,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 if (bite == '"') {
                     parseme = SYMBOL;
                     color(YELLOW);
-                    lexeme = CDR; //remove, string CAR is an error
                     goto send_bite;
                 }
             }
@@ -279,7 +274,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
-        if(parseme != SYMBOL && phoneme != PEL) {
+        if(parseme != SYMBOL) {
             lexeme = CDR;
         }
 report:
@@ -337,8 +332,8 @@ send_bite:
 }
 void setup() {
     // setup µlisp
-    gab[0] = '0';
-    drp[0] = '0';
+    gab[0] = '(';
+    drp[0] = '(';
     state = 0;
     Serial.begin(9600);
 }
@@ -350,7 +345,7 @@ void loop() {
     if (online) {
         if (state == 0) {
             Serial.print(HI);
-            Serial.print("\r\n\n");
+            Serial.print("\r\n\n(");
             state = CAR;
         } else {
             dancer();
