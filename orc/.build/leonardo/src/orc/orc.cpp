@@ -62,7 +62,7 @@ char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
-bool head = false;           // head or tail of symbol
+bool head = true;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
@@ -185,6 +185,9 @@ static bool rune(char cha) {
 void dancer() { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
+    if (!head) {
+        lexeme = CDR;   //the tail prints as CAR
+    }
 chew:
     char bite;
     char is_cha = 0; // stage out, phoneme always tracks latest letter.
@@ -282,7 +285,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = false;
             } else {
                 head = true;
-                lexeme = CDR;
             }
         }
 report:
@@ -319,7 +321,10 @@ report:
         }
         switch(lexeme) {
         case CAR:
-            //         Serial.print("̥");
+            Serial.print("»");
+            break;
+        case CDR:
+            Serial.print("«");
             break;
         }
 send_bite:
