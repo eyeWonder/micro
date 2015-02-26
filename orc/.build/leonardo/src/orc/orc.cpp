@@ -26,12 +26,13 @@ void loop();
 #define DRPMAX     64
 
 //Phonemes
-#define LETTER     1        // pair letter and rune
+#define LETTER     1
 #define RUNE       2
 #define PEL        3
 #define DIGIT      4
 #define PER        5
 #define SPACE      6
+#define QUOTE      7
 
 //Lexemes
 #define CAR        12
@@ -58,7 +59,7 @@ char bracecount = 0;
 char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
 char lexeme  = 0;              // place in symbol order.
-char parseme = 0;              // parser at work
+char parseme = SYMBOL;              // parser at work
 bool is_head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
@@ -179,105 +180,8 @@ static bool rune(char cha) {
     return false;
 }
 
-/*
-void dancer() { // first of the reindeer
-    char bite;
-    bool tail = true; // the next character is a head by default
-    char is_cha = 0;
-    if (Serial.available() && (bite = Serial.read())) {
-        gabber(bite);
-        herpderp(bite);
-        // Read
-        if (bite == ' ' || bite == ',') {
-            is_cha = SPACE;
-        }
-        if (('0' <= bite) && (bite <= '9')) {
-            is_cha = NUMBER;
-            color(CYAN);
-        }
-        if (rune(bite)) {
-            is_cha = RUNE;
-            tail = ! head;
-        }
-        if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
-            is_cha = LETTER;
-            tail = ! head;
-            color(RESET);
-        }
-        if (is_cha == RUNE || (was_cha == RUNE && is_cha == LETTER && !head)) {
-            color(GREEN);
-        }
-        switch(bite) {
-        case '(' :
-            is_cha = PEL;
-            state = CAR;
-            if (++bracecount > 0) {
-                color(bracecount % 8 + 1);
-            }
-            break;
-        case ')' :
-            is_cha = PER;
-            if (bracecount > 0) {
-                color(bracecount % 8 + 1);
-                bracecount--;
-            } else {
-                color(9);
-                bracecount = 0;
-            }
-            break;
-        case '\r' :
-            is_cha = SPACE;
-            state = CAR;
-            Serial.print("\r\n"); //jumpcall
-            for (byte i = 0 ; i < gibber; i++) {
-                Serial.print(char(gab[i])); //diagnostic
-            }
-            gibber = 0;
-            gab[0] = '(' ; // now there's a dirty hack
-            Serial.print("\r\n");
-            break;
-        case '\127' : // delete key
-            is_cha = gab[--gibber] ;
-            state = CAR ; //Fuck: copy gab forward by one and reparse using gab.
-            Serial.print(">>>>");
-        }
-
-        // Report
-        if (is_cha == RUNE && was_cha == LETTER && !head) {
-            // backup, recolor, print one from gab.
-            Serial.print("\33[D"); // generalize jump command
-            color(GREEN);
-            Serial.print(char(gab[gibber-1]));
-        }
-
-        if (state == CAR && (is_cha != PEL)) {
-            Serial.print("\33[4m"); // underline
-            state = CDR;
-        }
-        if (was_cha == NUMBER && is_cha != NUMBER && !head) {
-            Serial.print("\33[0m");
-            state = CDR;
-        }
-        // Serial.print(bite); faster
-        Serial.print(char(gab[gibber])); //keeps us honest
-
-        // Setup
-        if ((state == CAR && !head)  ) {
-            Serial.print("\33[0m"); // clear
-            state = CDR;
-        }
-
-        was_cha = is_cha;
-        head = tail ;
-        // Loop
-    }
-} */
-
 void dancer() { // first of the reindeer, 0.2
-// let's try this again.
-// dancer is a parser.
-// it sets up the gab and derp, determines semantics, and
-// moves forward.
+// dancer is a colorful parser.
 // dancer consumes one letter at a time.
 chew:
     char bite;
@@ -286,7 +190,8 @@ chew:
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
 parse:      // Djikstra forgive me. Knuth would understand.
-        if (true) {       // parseme == symbol
+        switch (parseme) {
+        case SYMBOL:         // parseme == symbol
             if (('0' <= bite) && (bite <= '9')) {
                 is_cha = NUMBER;
                 phoneme = DIGIT;
@@ -330,6 +235,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
                     bracecount = -1; // lower bound -1
                 }
                 break;
+            case '"' :
+                parseme = STRING;
+                phoneme = 0; // this lets us do escaping.
+                goto parse;
             case '\r' :
                 is_cha = SPACE;
                 phoneme = SPACE;
@@ -354,7 +263,25 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 goto chew;
                 break; // superfluous?
             }
+            break;
+        case NUMBER:
+            if (!('0' <= bite) || !(bite <= '9')) {
+                parseme = SYMBOL;
+                goto parse;
+            }
+            break; // not that it matters
+        case STRING: // include escaping logic, for now, close on "
+            if (phoneme == 0) {
+                phoneme = QUOTE;
+            } else {
+                if (bite == '"') {
+                    parseme = SYMBOL;
+                    color(YELLOW);
+                    goto send_bite;
+                }
+            }
         }
+report:
         switch(phoneme) {
         case LETTER :
             color(RESET);
@@ -363,10 +290,17 @@ parse:      // Djikstra forgive me. Knuth would understand.
             color(GREEN);
             break;
         case PEL    :
-            color(bracecount % 8);
+            if (bracecount <= 0) {
+                color(RESET);
+            } else {
+                color(bracecount % 8);
+            }
             break;
         case DIGIT  :
             color(CYAN);
+            break;
+        case QUOTE :
+            color(YELLOW);
             break;
         case PER    :
             if (bracecount < 0) { // this is a syntax error, later.
@@ -376,9 +310,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         case SPACE :
-            clear();
+            clear(); //shouldn't need
             break;
         }
+send_bite:
         if (is_cha != RUNE && is_cha != LETTER) {
             is_head = false;
         }
