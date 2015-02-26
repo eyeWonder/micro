@@ -37,6 +37,7 @@ void loop();
 //Lexemes
 #define CAR        12
 #define CDR        14
+#define ERROR      15
 
 //Parsemes
 #define SYMBOL     17
@@ -44,7 +45,8 @@ void loop();
 #define STRING     19
 #define COMMENT    20
 #define ESCAPE     27
-#define JANK       22
+#define JANK       29
+#define FAIL       42
 
 /*
 typedef slot {  // holds userdata
@@ -58,9 +60,9 @@ const char CLR[] = "\33[30m";
 char bracecount = 0;
 char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
-char lexeme  = 0;              // place in symbol order.
+char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
-bool is_head = false;           // head or tail of symbol
+bool head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
@@ -196,27 +198,17 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 is_cha = NUMBER;
                 phoneme = DIGIT;
                 parseme = NUMBER;
-                is_head = false; // should not be needed
+                head = false;
             }
             if (rune(bite)) {
                 is_cha = RUNE;
                 phoneme = RUNE;
                 parseme = SYMBOL;
-                if (is_head) {
-                    is_head = false;
-                } else {
-                    is_head = true;
-                }
             }
             if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
                 is_cha = LETTER;
                 phoneme = LETTER;
                 parseme = SYMBOL;
-                if (is_head) {
-                    is_head = false;
-                } else {
-                    is_head = true;
-                }
             }
             switch(bite) {
             case '(' :
@@ -238,6 +230,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             case '"' :
                 parseme = STRING;
                 phoneme = 0; // this lets us do escaping.
+                head = false;
                 goto parse;
             case '\r' :
                 is_cha = SPACE;
@@ -267,6 +260,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
         case NUMBER:
             if (!('0' <= bite) || !(bite <= '9')) {
                 parseme = SYMBOL;
+                lexeme = CDR; //remove, number CAR is an error
                 goto parse;
             }
             break; // not that it matters
@@ -277,9 +271,18 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 if (bite == '"') {
                     parseme = SYMBOL;
                     color(YELLOW);
-                    Serial.print("˘");
+                    lexeme = CDR; //remove, string CAR is an error
                     goto send_bite;
                 }
+            }
+            break;
+        }
+        if ((parseme == SYMBOL) && (phoneme == LETTER || phoneme == RUNE)) {
+            if (head) {
+                head = false;
+            } else {
+                head = true;
+                lexeme = CDR;
             }
         }
 report:
@@ -302,7 +305,7 @@ report:
             break;
         case QUOTE :
             color(YELLOW);
-            Serial.print("√");
+            break;
         case PER    :
             if (bracecount < 0) { // this is a syntax error, later.
                 color(RESET);
@@ -314,11 +317,16 @@ report:
             clear(); //shouldn't need
             break;
         }
+        switch(lexeme) {
+        case CAR:
+            //         Serial.print("̥");
+            break;
+        }
 send_bite:
         if (is_cha != RUNE && is_cha != LETTER) {
-            is_head = false;
+            head = false;
         }
-        if (is_head) {
+        if (head) {
             Serial.print("\33[4m");
         } else {
             Serial.print("\33[24m");
