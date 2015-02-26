@@ -181,7 +181,6 @@ void dancer() { // first of the reindeer, 0.2
 // dancer consumes one letter at a time.
 chew:
     char bite;
-    char is_cha = 0; // stage out, phoneme always tracks latest letter.
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -189,29 +188,24 @@ parse:      // Djikstra forgive me. Knuth would understand.
         switch (parseme) {
         case SYMBOL:         // parseme == symbol
             if (('0' <= bite) && (bite <= '9')) {
-                is_cha = NUMBER;
                 phoneme = DIGIT;
                 parseme = NUMBER;
                 head = false;
             }
             if (rune(bite)) {
-                is_cha = RUNE;
                 phoneme = RUNE;
             }
-            if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
-                is_cha = LETTER;
+            if (('A' <= bite) && (bite <= 'z') && phoneme != RUNE) {
                 phoneme = LETTER;
             }
             switch(bite) {
             case '(' :
-                is_cha = PEL;
                 phoneme = PEL;
                 lexeme = CAR;
                 head = true;
                 ++bracecount;
                 break;
             case ')' :
-                is_cha = PER;
                 phoneme = PER;
                 parseme = 0;
                 if (bracecount >= 0) {
@@ -226,7 +220,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = false;
                 goto parse;
             case '\r' :
-                is_cha = SPACE;
                 phoneme = SPACE;
                 clear();
                 Serial.print("\r\n"); //jumpcall
@@ -325,7 +318,7 @@ send_bite:
         } else {
             Serial.print("\33[24m");
         }
-        was_cha = is_cha;
+        was_cha = phoneme;
         Serial.print(gab[gibber]);
     }
 }
