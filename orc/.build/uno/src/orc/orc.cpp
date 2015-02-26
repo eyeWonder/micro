@@ -34,10 +34,8 @@ void loop();
 #define SPACE      6
 
 //Lexemes
-#define HEAD       8       // 
-#define TAIL       16
-#define CAR        32       // pair car and cdr
-#define CDR        64
+#define CAR        12
+#define CDR        14
 
 //Parsemes
 #define SYMBOL     17
@@ -60,13 +58,13 @@ char bracecount = 0;
 char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
 char lexeme  = 0;              // place in symbol order.
-char parseme = 0;
+char parseme = 0;              // parser at work
+bool is_head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
 char derp = 0;
 char was_cha = 0;
-bool head = true;
 
 bool online = false ; // useless replace with state
 
@@ -293,23 +291,33 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 is_cha = NUMBER;
                 phoneme = DIGIT;
                 parseme = NUMBER;
-                // goto top!
+                is_head = false; // should not be needed
             }
             if (rune(bite)) {
                 is_cha = RUNE;
                 phoneme = RUNE;
                 parseme = SYMBOL;
+                if (is_head) {
+                    is_head = false;
+                } else {
+                    is_head = true;
+                }
             }
             if (('A' <= bite) && (bite <= 'z') && is_cha != RUNE) {
                 is_cha = LETTER;
                 phoneme = LETTER;
                 parseme = SYMBOL;
+                if (is_head) {
+                    is_head = false;
+                } else {
+                    is_head = true;
+                }
             }
             switch(bite) {
             case '(' :
                 is_cha = PEL;
                 phoneme = PEL;
-                lexeme = CAR + HEAD;
+                lexeme = CAR;
                 ++bracecount;
                 break;
             case ')' :
@@ -324,25 +332,24 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 break;
             case '\r' :
                 is_cha = SPACE;
+                phoneme = SPACE;
                 parseme = SYMBOL;
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
                     Serial.print(char(gab[i])); //diagnostic
                 }
-                gibber = 0;
-                gab[0] = '(' ; // now there's a dirty hack
-                lexeme = CAR + HEAD;
+                gibber = -1;
                 Serial.print("\r\n");
                 break;
-            case 127 :
-                --gibber; // turn into a proper undo that corrects e.g. bracecount
+            case 127 : // move to own function, protect against deletes past zero!
+                --gibber; // walk back to last cha
                 if (gab[gibber] == '(') {
                     --bracecount;
                 }
                 if (gab[gibber] == ')') {
                     ++bracecount;
                 }
-                --gibber;
+                --gibber; // prior to last cha
                 Serial.print("\33[D \33[D");
                 goto chew;
                 break; // superfluous?
@@ -372,15 +379,16 @@ parse:      // Djikstra forgive me. Knuth would understand.
             clear();
             break;
         }
-        /*        if (phoneme != PEL) {
-                    Serial.print("λ");
-                    clear();
-                }
-        */
+                if (is_cha != RUNE && is_cha != NUMBER) {
+            is_head = false;
+        } 
+        if (is_head) {
+            Serial.print("\33[4m");
+        } else {
+            Serial.print("\33[24m");
+        }
         was_cha = is_cha;
         Serial.print(gab[gibber]);
-
-
     }
 }
 void setup() {
