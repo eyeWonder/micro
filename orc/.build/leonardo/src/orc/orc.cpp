@@ -221,6 +221,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 is_cha = PEL;
                 phoneme = PEL;
                 lexeme = CAR;
+                head = true;
                 ++bracecount;
                 break;
             case ')' :
@@ -250,7 +251,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 Serial.print("\r\n\r\n");
                 break;
             case 127 : // delete key
-            // move to own function, protect against deletes past zero!
+                // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
                 if (gab[gibber] == '(') {
                     --bracecount;
@@ -261,7 +262,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 --gibber; // prior to last cha
                 Serial.print("\33[D \33[D");
                 goto chew;
-                break; 
+                break;
             }
             break;
         case NUMBER:
@@ -269,7 +270,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 parseme = SYMBOL;
                 goto parse;
             }
-            break; 
+            break;
         case STRING: // include escaping logic, for now, close on "
             if (phoneme == 0) {
                 phoneme = QUOTE;
@@ -283,7 +284,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             break;
         } // ends switch(parseme)
         if ((parseme == SYMBOL) && (phoneme == LETTER || phoneme == RUNE)) {
-            if (head) {
+            if (head) {               // ^--should be redundant?
                 head = false;
             } else {
                 head = true;
@@ -333,9 +334,6 @@ report:
             break;
         }
 send_bite:
-        if (is_cha != RUNE && is_cha != LETTER) {
-       //     head = false;
-        }
         if (head) {
             Serial.print("\33[4m");
         } else {

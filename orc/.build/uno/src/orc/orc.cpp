@@ -63,11 +63,11 @@ char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
-bool head = true;           // head or tail of symbol
+bool head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
-char gibber = -1;
-char derp = -1;
+char gibber = 0;
+char derp = 0;
 char was_cha = 0;
 
 bool online = false ; // useless replace with state
@@ -221,6 +221,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 is_cha = PEL;
                 phoneme = PEL;
                 lexeme = CAR;
+                head = true;
                 ++bracecount;
                 break;
             case ')' :
@@ -247,9 +248,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
                     Serial.print(char(gab[i])); //diagnostic
                 }
                 gibber = -1;
-                Serial.print("\r\n\n");
+                Serial.print("\r\n\r\n");
                 break;
-            case 127 : // move to own function, protect against deletes past zero!
+            case 127 : // delete key
+            // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
                 if (gab[gibber] == '(') {
                     --bracecount;
@@ -260,7 +262,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 --gibber; // prior to last cha
                 Serial.print("\33[D \33[D");
                 goto chew;
-                break; // superfluous?
+                break; 
             }
             break;
         case NUMBER:
@@ -268,7 +270,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 parseme = SYMBOL;
                 goto parse;
             }
-            break; // not that it matters
+            break; 
         case STRING: // include escaping logic, for now, close on "
             if (phoneme == 0) {
                 phoneme = QUOTE;
@@ -280,12 +282,13 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 }
             }
             break;
-        }
+        } // ends switch(parseme)
         if ((parseme == SYMBOL) && (phoneme == LETTER || phoneme == RUNE)) {
             if (head) {
                 head = false;
             } else {
                 head = true;
+                                lexeme = CDR;
             }
         }
         if(parseme != SYMBOL) {
@@ -332,9 +335,6 @@ report:
             break;
         }
 send_bite:
-        if (is_cha != RUNE && is_cha != LETTER) {
-            head = false;
-        }
         if (head) {
             Serial.print("\33[4m");
         } else {
@@ -346,8 +346,8 @@ send_bite:
 }
 void setup() {
     // setup µlisp
-    gab[0] = '0';
-    drp[0] = '0';
+    gab[0] = '(';
+    drp[0] = '(';
     state = 0;
     Serial.begin(9600);
 }
@@ -359,7 +359,7 @@ void loop() {
     if (online) {
         if (state == 0) {
             Serial.print(HI);
-            Serial.print("\r\n\n");
+            Serial.print("\r\n\n(");
             state = CAR;
         } else {
             dancer();
