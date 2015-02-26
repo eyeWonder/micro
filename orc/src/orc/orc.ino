@@ -52,8 +52,8 @@ char parseme = SYMBOL;              // parser at work
 bool head = true;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
-char gibber = 0;
-char derp = 0;
+char gibber = -1;
+char derp = -1;
 char was_cha = 0;
 
 bool online = false ; // useless replace with state
@@ -169,12 +169,16 @@ static bool rune(char cha) {
     return false;
 }
 
+void printabove(char above) {
+    // a helper function to print stuff above.
+    Serial.print("\33[A"); // up
+    Serial.print(above);
+    Serial.print("\33[D\33[B"); // back/down
+}
+
 void dancer() { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-    if (!head) {
-        lexeme = CDR;   //the tail prints as CAR
-    }
 chew:
     char bite;
     char is_cha = 0; // stage out, phoneme always tracks latest letter.
@@ -210,7 +214,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             case ')' :
                 is_cha = PER;
                 phoneme = PER;
-                parseme = SYMBOL;
+                parseme = 0;
                 if (bracecount >= 0) {
                     --bracecount;
                 } else {
@@ -225,13 +229,14 @@ parse:      // Djikstra forgive me. Knuth would understand.
             case '\r' :
                 is_cha = SPACE;
                 phoneme = SPACE;
-                parseme = SYMBOL;
+                parseme = 0;
+                clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
                     Serial.print(char(gab[i])); //diagnostic
                 }
                 gibber = -1;
-                Serial.print("\r\n");
+                Serial.print("\r\n\n");
                 break;
             case 127 : // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
@@ -274,6 +279,9 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
+        if(parseme != SYMBOL && phoneme != PEL) {
+            lexeme = CDR;
+        }
 report:
         switch(phoneme) {
         case LETTER :
@@ -308,10 +316,10 @@ report:
         }
         switch(lexeme) {
         case CAR:
-            Serial.print("»");
+            printabove('>');
             break;
         case CDR:
-            Serial.print("«");
+            printabove('<');
             break;
         }
 send_bite:
@@ -329,8 +337,8 @@ send_bite:
 }
 void setup() {
     // setup µlisp
-    gab[0] = '(';
-    drp[0] = '(';
+    gab[0] = '0';
+    drp[0] = '0';
     state = 0;
     Serial.begin(9600);
 }
@@ -342,7 +350,7 @@ void loop() {
     if (online) {
         if (state == 0) {
             Serial.print(HI);
-            Serial.print("\r\n(");
+            Serial.print("\r\n\n");
             state = CAR;
         } else {
             dancer();

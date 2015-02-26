@@ -49,7 +49,7 @@ char state = 0;                // online or not
 char phoneme = 0;              // type of letter detected
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
-bool head = false;           // head or tail of symbol
+bool head = true;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
@@ -169,10 +169,13 @@ static bool rune(char cha) {
     return false;
 }
 
+void printabove(char above) {
+    // a helper function to print stuff above. 
+}
+
 void dancer() { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-    if (!head) { lexeme = CDR;} //the tail prints as CAR
 chew:
     char bite;
     char is_cha = 0; // stage out, phoneme always tracks latest letter.
@@ -327,7 +330,7 @@ send_bite:
 }
 void setup() {
     // setup µlisp
-    gab[0] = '(';
+    gab[0] = '>';
     drp[0] = '(';
     state = 0;
     Serial.begin(9600);
