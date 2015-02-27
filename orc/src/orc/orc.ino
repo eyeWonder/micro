@@ -269,18 +269,23 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
-        /*     if ((phoneme == LETTER) && (was_cha == RUNE) && !head) {
-                 Serial.print("\33[D»»»"); // generalize jump command
-                 color(GREEN);
-                 Serial.print(char(gab[gibber-1]));
-             } */
+        if ((phoneme == RUNE) && (was_cha == LETTER) && !head) {
+            Serial.print("\33[D"); // generalize jump command
+            color(GREEN);
+            Serial.print(char(gab[gibber-1]));
+        }
         if(parseme != SYMBOL) {
             lexeme = CDR;
         }
 report:
         switch(phoneme) {
         case LETTER :
-            color(WHITE);
+            if (was_cha == RUNE) {
+                color(GREEN);
+            }
+            else {
+                color(WHITE);
+            }
             break;
         case RUNE   :
             color(GREEN);
