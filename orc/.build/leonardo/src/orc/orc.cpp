@@ -276,8 +276,8 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         } // ends switch(parseme)
-        if ((parseme == SYMBOL) && (phoneme == LETTER || phoneme == RUNE)) {
-            if (head) {               // ^--should be redundant?
+        if ((phoneme == LETTER || phoneme == RUNE)) {
+            if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
                 head = false;
             } else {
                 head = true;
@@ -288,6 +288,9 @@ parse:      // Djikstra forgive me. Knuth would understand.
             color(GREEN);
             Serial.print(char(gab[gibber-1]));
         }
+/*        if(!head &&(was_cha == LETTER || was_cha == RUNE)) {
+            lexeme = CDR;
+        } */
         if(parseme != SYMBOL) {
             lexeme = CDR;
         }
