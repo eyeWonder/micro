@@ -30,11 +30,3 @@ Orcs are not guaranteed to have a consistent short form and it is never used to 
 
 Each character is its own parser, responsible for setting paths through a 
 
-
-###Unit Tests:
-
-```
-(:\ Qu (* (+ 34 $0) $1))
-
-(Fu (= 34 A) (e% "a string") (%e 23 "a string"))
-(Fu(=34A)(e%"a string")(%e23"a string"))

@@ -8,7 +8,7 @@ static void gabber(char front);
 static void herpderp(char front);
 static bool rune(char cha);
 void printabove(char above);
-void dancer();
+void dancer(char bite);
 void setup();
 void loop();
 #line 1 "src/orc/orc.ino"
@@ -193,186 +193,191 @@ void printabove(char above) {
     Serial.print("\33[D\33[B"); // back/down
 }
 
-void dancer() { // first of the reindeer, 0.2
+void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-chew:
-    char bite;
+chew:  // Djikstra forgive me. Knuth would understand.
     phoneme = 0;
-    if (Serial.available() && (bite = Serial.read())) {
-        gabber(bite);
+    gabber(bite);
 //     herpderp(bite);    // forget the derp for now
-parse:      // Djikstra forgive me. Knuth would understand.
-        if (bite == 127) { // delete key
-            // move to own function, protect against deletes past zero!
-            --gibber; // walk back to last cha
-            if (gab[gibber] == '(') {
-                --bracecount;
-            }
-            if (gab[gibber] == ')') {
-                ++bracecount;
-            }
-            --gibber; // prior to last cha
-            Serial.print("\33[D \33[D");
-            goto chew;
+
+parse:
+    if (bite == 127) { // delete key
+        // move to own function, protect against deletes past zero!
+        --gibber; // walk back to last cha
+        if (gab[gibber] == '(') {
+            --bracecount;
         }
-        switch (parseme) {
-        case SYMBOL:         // parseme == symbol
-            if (('0' <= bite) && (bite <= '9')) {
-                phoneme = DIGIT;
-                parseme = NUMBER;
-                head = false;
-            }
-            if (rune(bite)) {
-                phoneme = RUNE;
-            }
-            if (('A' <= bite) && (bite <= 'z') && phoneme != RUNE) {
-                phoneme = LETTER;
-            }
-            switch(bite) {
-            case '(' :
-                phoneme = PEL;
-                lexeme = CAR;
-                head = true;
-                ++bracecount;
-                break;
-            case ')' :
-                phoneme = PER;
-                if (bracecount >= 0) {
-                    --bracecount;
-                } else {
-                    bracecount = -1; // lower bound -1
-                }
-                break;
-            case '"' :
-                parseme = STRING;
-                phoneme = ESCAPE; // reused for jump
-                head = false;
-                goto parse;
-            case ';' :
-                parseme = COMMENT;
-                head = false;
-                goto parse;
-                break;
-            case '\r' :
-                phoneme = SPACE;
-                //<diagnostic>
-                clear();
-                Serial.print("\r\n"); //jumpcall
-                for (byte i = 0 ; i < gibber; i++) {
-                    Serial.print(char(gab[i]));
-                }
-                //</diagnostic>
-                gibber = -1;
-                Serial.print("\r\n");
-                break;
-            case ' ' :
-                phoneme = SPACE;
-                head = false;
-                break;
-            }
+        if (gab[gibber] == ')') {
+            ++bracecount;
+        }
+        --gibber; // prior to last cha
+        Serial.print("\33[D \33[D");
+        goto chew;
+    }
+    switch (parseme) {
+    case SYMBOL:         // parseme == symbol
+        if (('0' <= bite) && (bite <= '9')) {
+            phoneme = DIGIT;
+            parseme = NUMBER;
+            head = false;
+        }
+        if (rune(bite)) {
+            phoneme = RUNE;
+        }
+        if (('A' <= bite) && (bite <= 'z') && phoneme != RUNE) {
+            phoneme = LETTER;
+        }
+        switch(bite) {
+        case '(' :
+            phoneme = PEL;
+            lexeme = CAR;
+            head = true;
+            ++bracecount;
             break;
-        case NUMBER:
-            if (!('0' <= bite) || !(bite <= '9')) {
-                parseme = SYMBOL;
-                goto parse;
-            }
-            break;
-        case STRING: // include escaping logic, for now, close on "
-            if (phoneme == ESCAPE) {
-                phoneme = QUOTE;
+        case ')' :
+            phoneme = PER;
+            if (bracecount >= 0) {
+                --bracecount;
             } else {
-                if (bite == '"') {
-                    parseme = SYMBOL;
-                    color(YELLOW);
-                    goto send_bite;
-                }
+                bracecount = -1; // lower bound -1
             }
             break;
-        case COMMENT:
-            if (bite == '\r') {
-                parseme = SYMBOL;
-                goto parse;
+        case '"' :
+            parseme = STRING;
+            phoneme = ESCAPE; // reused for jump
+            head = false;
+            goto parse;
+        case ';' :
+            parseme = COMMENT;
+            head = false;
+            goto parse;
+            break;
+        case '\r' :
+            phoneme = SPACE;
+            //<diagnostic>
+            clear();
+            Serial.print("\r\n"); //jumpcall
+            for (byte i = 0 ; i < gibber; i++) {
+                Serial.print(char(gab[i]));
             }
-            if (bite == ';') {
-                color(BLACK);
+            //</diagnostic>
+            gibber = -1;
+            Serial.print("\r\n");
+            break;
+        case ' ' :
+            phoneme = SPACE;
+            head = false;
+            break;
+        }
+        break;
+    case NUMBER:
+        if (!('0' <= bite) || !(bite <= '9')) {
+            parseme = SYMBOL;
+            goto parse;
+        }
+        break;
+    case STRING: // include escaping logic, for now, close on "
+        if (phoneme == ESCAPE) {
+            phoneme = QUOTE;
+        } else {
+            if (bite == '"') {
+                parseme = SYMBOL;
+                color(YELLOW);
                 goto send_bite;
             }
-            break;
-        } // ends switch(parseme)
-        if (phoneme & GLYPH) {
-            //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
-            if (was_cha & (LETTER | RUNE)) {
-                head = !head;
-            } else {
-                head = true;
-            }
         }
-        if ((phoneme == RUNE) && (was_cha == LETTER) && !head) {
-            Serial.print("\33[D"); // generalize jump command
-            color(GREEN);
-            Serial.print(char(gab[gibber-1]));
+        break;
+    case COMMENT:
+        if (bite == '\r') {
+            parseme = SYMBOL;
+            goto parse;
         }
-        if(parseme != SYMBOL || phoneme == SPACE) {
-            lexeme = CDR;
+        if (bite == ';') {
+            color(BLACK);
+            goto send_bite;
         }
-report:
-        switch(phoneme) {
-        case LETTER :
-            if (was_cha == RUNE && !head) {
-                color(GREEN);
-            }
-            else {
-                color(WHITE);
-            }
-            break;
-        case RUNE   :
-            color(GREEN);
-            break;
-        case PEL    :
-            if (bracecount <= 0) {
-                color(RESET);
-            } else {
-                color(bracecount % 8);
-            }
-            break;
-        case DIGIT  :
-            color(CYAN);
-            break;
-        case QUOTE :
-            color(YELLOW);
-            break;
-        case PER    :
-            if (bracecount < 0) { // this is a syntax error, later.
-                color(RESET);
-            } else {
-                color((bracecount % 8)+1);
-            }
-            break;
-        }
-        switch(lexeme) {
-        case CAR:
-            Serial.print("\33[40m");
-            break;
-        case CDR:
-            Serial.print("\33[49m");
-            break;
-        }
-send_bite:
-        if (head) {
-            Serial.print("\33[4m");
+        break;
+    case ESCAPE:
+        // handle ANSI escape sequences
+        // 'minimal compliance'
+        // see http://en.wikipedia.org/wiki/ANSI_escape_code
+        break;
+    }   // ends switch(parseme)
+    if (phoneme & GLYPH) {
+        if (was_cha & (LETTER | RUNE)) {
+            head = !head;
         } else {
-            Serial.print("\33[24m");
-        }
-        Serial.print(gab[gibber]);
-        //setup next loop
-next:
-        was_cha = phoneme;
-        if(!head && (was_cha & GLYPH)) {
-            lexeme = CDR;
+            head = true;
         }
     }
+    if ((phoneme == RUNE) && (was_cha == LETTER) && !head) {
+        Serial.print("\33[D"); // generalize jump command
+        color(GREEN);
+        Serial.print(char(gab[gibber-1]));
+    }
+    if(parseme != SYMBOL || phoneme == SPACE) {
+        lexeme = CDR;
+    }
+
+report:
+    switch(phoneme) {
+    case LETTER :
+        if (was_cha == RUNE && !head) {
+            color(GREEN);
+        }
+        else {
+            color(WHITE);
+        }
+        break;
+    case RUNE   :
+        color(GREEN);
+        break;
+    case PEL    :
+        if (bracecount <= 0) {
+            color(RESET);
+        } else {
+            color(bracecount % 8);
+        }
+        break;
+    case DIGIT  :
+        color(CYAN);
+        break;
+    case QUOTE :
+        color(YELLOW);
+        break;
+    case PER    :
+        if (bracecount < 0) { // this is a syntax error, later.
+            color(RESET);
+        } else {
+            color((bracecount % 8)+1);
+        }
+        break;
+    }
+    switch(lexeme) {
+    case CAR:
+        Serial.print("\33[40m");
+        break;
+    case CDR:
+        Serial.print("\33[49m");
+        break;
+    }
+
+send_bite:
+    if (head) {
+        Serial.print("\33[4m");
+    } else {
+        Serial.print("\33[24m");
+    }
+    Serial.print(gab[gibber]);
+
+next:
+    was_cha = phoneme;
+    if(!head && (was_cha & GLYPH)) {
+        lexeme = CDR;
+    }
 }
+
 void setup() {
     // setup µlisp
     gab[0] = '(';
@@ -382,6 +387,7 @@ void setup() {
 }
 
 void loop() {
+    char bite;
     if (state < 4 && online == false) { // state should be negative when not interacting
         cheer();
     }
@@ -391,7 +397,9 @@ void loop() {
             Serial.print("\r\n\n(");
             state = CAR;
         } else {
-            dancer();
+            if (Serial.available() && (bite = Serial.read())) {
+                dancer(bite);
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ static void gabber(char front);
 static void herpderp(char front);
 static bool rune(char cha);
 void printabove(char above);
-void dancer();
+void dancer(char bite);
 void setup();
 void loop();
 #line 1 "src/orc/orc.ino"
@@ -193,15 +193,14 @@ void printabove(char above) {
     Serial.print("\33[D\33[B"); // back/down
 }
 
-void dancer() { // first of the reindeer, 0.2
+void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-    char bite;
-    if (Serial.available() && (bite = Serial.read())) {
 chew:  // Djikstra forgive me. Knuth would understand.
         phoneme = 0;
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
+
 parse:
         if (bite == 127) { // delete key
             // move to own function, protect against deletes past zero!
@@ -299,9 +298,13 @@ parse:
                 goto send_bite;
             }
             break;
-        } // ends switch(parseme)
+        case ESCAPE:
+            // handle ANSI escape sequences
+            // 'minimal compliance'
+            // see http://en.wikipedia.org/wiki/ANSI_escape_code
+            break;
+        }   // ends switch(parseme)
         if (phoneme & GLYPH) {
-            //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
             if (was_cha & (LETTER | RUNE)) {
                 head = !head;
             } else {
@@ -316,6 +319,7 @@ parse:
         if(parseme != SYMBOL || phoneme == SPACE) {
             lexeme = CDR;
         }
+
 report:
         switch(phoneme) {
         case LETTER :
@@ -358,6 +362,7 @@ report:
             Serial.print("\33[49m");
             break;
         }
+
 send_bite:
         if (head) {
             Serial.print("\33[4m");
@@ -365,13 +370,12 @@ send_bite:
             Serial.print("\33[24m");
         }
         Serial.print(gab[gibber]);
-        //setup next loop
+
 next:
         was_cha = phoneme;
         if(!head && (was_cha & GLYPH)) {
             lexeme = CDR;
         }
-    }
 }
 void setup() {
     // setup µlisp
@@ -382,6 +386,7 @@ void setup() {
 }
 
 void loop() {
+    char bite;
     if (state < 4 && online == false) { // state should be negative when not interacting
         cheer();
     }
@@ -391,7 +396,9 @@ void loop() {
             Serial.print("\r\n\n(");
             state = CAR;
         } else {
-            dancer();
+            if (Serial.available() && (bite = Serial.read())) {
+                dancer(bite);
+            }
         }
     }
 }
