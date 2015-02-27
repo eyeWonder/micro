@@ -13,15 +13,15 @@
 #define DRPMAX     64
 
 //Phonemes
-#define LETTER     2
-#define RUNE       4
-#define PEL        8
-#define DIGIT      16
-#define PER        32
-#define SPACE      64
-#define QUOTE      128
+#define LETTER     0b00000001          // 1
+#define RUNE       0b00000010          // 2
+#define PEL        0b00000100          // 4
+#define DIGIT      0b00001000          // 8
+#define PER        0b00010000          // 16
+#define SPACE      0b00100000          // 32
+#define QUOTE      0b01000000          // 64
 
-#define GLYPH      (LETTER | RUNE)     
+#define GLYPH      0b00000011          // LETTER | RUNE     
 
 //Lexemes
 #define CAR        12
@@ -35,8 +35,8 @@
 #define COMMENT    21
 #define ESCAPE     27
 #define JANK       29
+#define LAMBDA     93
 #define FAIL       42
-#define REUP       69 //this is slightly kludgey
 
 /*
 typedef slot {  // holds userdata
@@ -51,6 +51,7 @@ char bracecount = 0;
 char state = 0;                // online or not
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
+char phoneme = 0;
 bool head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
@@ -183,7 +184,7 @@ void dancer() { // first of the reindeer, 0.2
 // dancer consumes one letter at a time.
 chew:
     char bite;
-    char phoneme = 0;
+    phoneme = 0;
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -218,7 +219,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 break;
             case '"' :
                 parseme = STRING;
-                phoneme = REUP; // special phoneme for back goto
+                phoneme = ESCAPE; // reused for jump
                 head = false;
                 goto parse;
             case '\r' :
@@ -257,7 +258,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         case STRING: // include escaping logic, for now, close on "
-            if (phoneme == REUP) {
+            if (phoneme == ESCAPE) {
                 phoneme = QUOTE;
             } else {
                 if (bite == '"') {
@@ -317,9 +318,6 @@ report:
                 color((bracecount % 8)+1);
             }
             break;
-        case SPACE :
-            clear(); //shouldn't need
-            break;
         }
         switch(lexeme) {
         case CAR:
@@ -337,6 +335,7 @@ send_bite:
         }
         Serial.print(gab[gibber]);
         //setup next loop
+next:
         was_cha = phoneme;
         if(!head && (was_cha & GLYPH)) {
             lexeme = CDR;
