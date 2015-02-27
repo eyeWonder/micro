@@ -226,7 +226,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                     Serial.print(char(gab[i])); //diagnostic
                 }
                 gibber = -1;
-                Serial.print("\r\n\r\n");
+                Serial.print("\r\n");
                 break;
             case 127 : // delete key
                 // move to own function, protect against deletes past zero!
@@ -255,6 +255,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             } else {
                 if (bite == '"') {
                     parseme = SYMBOL;
+                    Serial.print("»»»")
                     color(YELLOW);
                     goto send_bite;
                 }
