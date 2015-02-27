@@ -229,6 +229,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 gibber = -1;
                 Serial.print("\r\n");
                 break;
+            case ' ' :
+                phoneme = SPACE;
+                head = false;
+                break;
             case 127 : // delete key
                 // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
@@ -274,7 +278,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             color(GREEN);
             Serial.print(char(gab[gibber-1]));
         }
-        if(parseme != SYMBOL) {
+        if(parseme != SYMBOL || phoneme == SPACE) {
             lexeme = CDR;
         }
 report:

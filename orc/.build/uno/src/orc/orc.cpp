@@ -243,6 +243,10 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 gibber = -1;
                 Serial.print("\r\n");
                 break;
+            case ' ' :
+                phoneme = SPACE;
+                head = false;
+                break;
             case 127 : // delete key
                 // move to own function, protect against deletes past zero!
                 --gibber; // walk back to last cha
@@ -278,7 +282,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
         } // ends switch(parseme)
         if ((phoneme == LETTER || phoneme == RUNE)) {
             if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
-                head = false;
+                head = !head;
             } else {
                 head = true;
             }
@@ -288,13 +292,13 @@ parse:      // Djikstra forgive me. Knuth would understand.
             color(GREEN);
             Serial.print(char(gab[gibber-1]));
         }
-        if(parseme != SYMBOL) {
+        if(parseme != SYMBOL || phoneme == SPACE) {
             lexeme = CDR;
         }
 report:
         switch(phoneme) {
         case LETTER :
-            if (was_cha == RUNE) {
+            if (was_cha == RUNE && !head) {
                 color(GREEN);
             }
             else {
@@ -330,7 +334,7 @@ report:
         }
         switch(lexeme) {
         case CAR:
-            Serial.print("\33[46m");
+            Serial.print("\33[40m");
             break;
         case CDR:
             Serial.print("\33[49m");
@@ -344,9 +348,10 @@ send_bite:
         }
         Serial.print(gab[gibber]);
         //setup next loop
-                was_cha = phoneme;
+        was_cha = phoneme;
         if(!head &&(was_cha == LETTER || was_cha == RUNE)) {
-            lexeme = CDR;}
+            lexeme = CDR;
+        }
     }
 }
 void setup() {

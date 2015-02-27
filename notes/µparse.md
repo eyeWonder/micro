@@ -29,3 +29,9 @@ Orcs are not guaranteed to have a consistent short form and it is never used to 
 ## The Very Special Parser
 
 Each character is its own parser, responsible for setting paths through a 
+
+
+###Unit Test:
+
+```
+(:\ Qu (* (+ 34 $0) $1))
