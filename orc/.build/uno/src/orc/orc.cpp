@@ -73,7 +73,7 @@ char gibber = 0;
 char derp = 0;
 char was_cha = 0;
 
-bool online = false ; // useless replace with state
+bool online = true ; // useless replace with state
 
 static void color(char foreground) { // prints a foreground color, for now
     // bum: bitfield: @@@@$$$$
@@ -203,7 +203,119 @@ chew:
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
 parse:      // Djikstra forgive me. Knuth would understand.
-
+                    if (bite == 127) { // delete key
+                // move to own function, protect against deletes past zero!
+                --gibber; // walk back to last cha
+                if (gab[gibber] == '(') {
+                    --bracecount;
+                }
+                if (gab[gibber] == ')') {
+                    ++bracecount;
+                }
+                --gibber; // prior to last cha
+                Serial.print("\33[D \33[D");
+                goto chew;
+        }
+        switch (parseme) {
+        case SYMBOL:         // parseme == symbol
+            if (('0' <= bite) && (bite <= '9')) {
+                phoneme = DIGIT;
+                parseme = NUMBER;
+                head = false;
+            }
+            if (rune(bite)) {
+                phoneme = RUNE;
+            }
+            if (('A' <= bite) && (bite <= 'z') && phoneme != RUNE) {
+                phoneme = LETTER;
+            }
+            switch(bite) {
+            case '(' :
+                phoneme = PEL;
+                lexeme = CAR;
+                head = true;
+                ++bracecount;
+                break;
+            case ')' :
+                phoneme = PER;
+                if (bracecount >= 0) {
+                    --bracecount;
+                } else {
+                    bracecount = -1; // lower bound -1
+                }
+                break;
+            case '"' :
+                parseme = STRING;
+                phoneme = ESCAPE; // reused for jump
+                head = false;
+                goto parse;
+            case ';' :
+                parseme = COMMENT;
+                head = false;
+                goto parse;
+                break;
+            case '\r' :
+                phoneme = SPACE;
+                //<diagnostic>
+                clear();
+                Serial.print("\r\n"); //jumpcall
+                for (byte i = 0 ; i < gibber; i++) {
+                    Serial.print(char(gab[i]));
+                }
+                //</diagnostic>
+                gibber = -1;
+                Serial.print("\r\n");
+                break;
+            case ' ' :
+                phoneme = SPACE;
+                head = false;
+                break;
+            }
+            break;
+        case NUMBER:
+            if (!('0' <= bite) || !(bite <= '9')) {
+                parseme = SYMBOL;
+                goto parse;
+            }
+            break;
+        case STRING: // include escaping logic, for now, close on "
+            if (phoneme == ESCAPE) {
+                phoneme = QUOTE;
+            } else {
+                if (bite == '"') {
+                    parseme = SYMBOL;
+                    color(YELLOW);
+                    goto send_bite;
+                }
+            }
+            break;
+        case COMMENT:
+            if (bite == '\r') {
+                parseme = SYMBOL;
+                goto parse;
+            }
+            if (bite == ';') {
+                color(BLACK);
+                goto send_bite;
+            }
+            break;
+        } // ends switch(parseme)
+        if (phoneme & GLYPH) {
+            //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
+            if (was_cha & (LETTER | RUNE)) {
+                head = !head;
+            } else {
+                head = true;
+            }
+        }
+        if ((phoneme == RUNE) && (was_cha == LETTER) && !head) {
+            Serial.print("\33[D"); // generalize jump command
+            color(GREEN);
+            Serial.print(char(gab[gibber-1]));
+        }
+        if(parseme != SYMBOL || phoneme == SPACE) {
+            lexeme = CDR;
+        }
 report:
         switch(phoneme) {
         case LETTER :

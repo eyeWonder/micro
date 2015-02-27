@@ -203,6 +203,19 @@ chew:
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
 parse:      // Djikstra forgive me. Knuth would understand.
+        if (bite == 127) { // delete key
+            // move to own function, protect against deletes past zero!
+            --gibber; // walk back to last cha
+            if (gab[gibber] == '(') {
+                --bracecount;
+            }
+            if (gab[gibber] == ')') {
+                ++bracecount;
+            }
+            --gibber; // prior to last cha
+            Serial.print("\33[D \33[D");
+            goto chew;
+        }
         switch (parseme) {
         case SYMBOL:         // parseme == symbol
             if (('0' <= bite) && (bite <= '9')) {
@@ -236,32 +249,26 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 phoneme = ESCAPE; // reused for jump
                 head = false;
                 goto parse;
+            case ';' :
+                parseme = COMMENT;
+                head = false;
+                goto parse;
+                break;
             case '\r' :
                 phoneme = SPACE;
+                //<diagnostic>
                 clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
-                    Serial.print(char(gab[i])); //diagnostic
+                    Serial.print(char(gab[i]));
                 }
+                //</diagnostic>
                 gibber = -1;
                 Serial.print("\r\n");
                 break;
             case ' ' :
                 phoneme = SPACE;
                 head = false;
-                break;
-            case 127 : // delete key
-                // move to own function, protect against deletes past zero!
-                --gibber; // walk back to last cha
-                if (gab[gibber] == '(') {
-                    --bracecount;
-                }
-                if (gab[gibber] == ')') {
-                    ++bracecount;
-                }
-                --gibber; // prior to last cha
-                Serial.print("\33[D \33[D");
-                goto chew;
                 break;
             }
             break;
@@ -280,6 +287,16 @@ parse:      // Djikstra forgive me. Knuth would understand.
                     color(YELLOW);
                     goto send_bite;
                 }
+            }
+            break;
+        case COMMENT:
+            if (bite == '\r') {
+                parseme = SYMBOL;
+                goto parse;
+            }
+            if (bite == ';') {
+                color(BLACK);
+                goto send_bite;
             }
             break;
         } // ends switch(parseme)

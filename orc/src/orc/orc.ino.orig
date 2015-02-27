@@ -59,7 +59,7 @@ char gibber = 0;
 char derp = 0;
 char was_cha = 0;
 
-bool online = false ; // useless replace with state
+bool online = true ; // useless replace with state
 
 static void color(char foreground) { // prints a foreground color, for now
     // bum: bitfield: @@@@$$$$
@@ -179,7 +179,29 @@ void printabove(char above) {
     Serial.print("\33[D\33[B"); // back/down
 }
 
-void parse_bite(char bite) {
+void dancer() { // first of the reindeer, 0.2
+// dancer is a colorful parser.
+// dancer consumes one letter at a time.
+chew:
+    char bite;
+    phoneme = 0;
+    if (Serial.available() && (bite = Serial.read())) {
+        gabber(bite);
+//     herpderp(bite);    // forget the derp for now
+parse:      // Djikstra forgive me. Knuth would understand.
+                    if (bite == 127) { // delete key
+                // move to own function, protect against deletes past zero!
+                --gibber; // walk back to last cha
+                if (gab[gibber] == '(') {
+                    --bracecount;
+                }
+                if (gab[gibber] == ')') {
+                    ++bracecount;
+                }
+                --gibber; // prior to last cha
+                Serial.print("\33[D \33[D");
+                goto chew;
+        }
         switch (parseme) {
         case SYMBOL:         // parseme == symbol
             if (('0' <= bite) && (bite <= '9')) {
@@ -213,32 +235,26 @@ void parse_bite(char bite) {
                 phoneme = ESCAPE; // reused for jump
                 head = false;
                 goto parse;
+            case ';' :
+                parseme = COMMENT;
+                head = false;
+                goto parse;
+                break;
             case '\r' :
                 phoneme = SPACE;
+                //<diagnostic>
                 clear();
                 Serial.print("\r\n"); //jumpcall
                 for (byte i = 0 ; i < gibber; i++) {
-                    Serial.print(char(gab[i])); //diagnostic
+                    Serial.print(char(gab[i]));
                 }
+                //</diagnostic>
                 gibber = -1;
                 Serial.print("\r\n");
                 break;
             case ' ' :
                 phoneme = SPACE;
                 head = false;
-                break;
-            case 127 : // delete key
-                // move to own function, protect against deletes past zero!
-                --gibber; // walk back to last cha
-                if (gab[gibber] == '(') {
-                    --bracecount;
-                }
-                if (gab[gibber] == ')') {
-                    ++bracecount;
-                }
-                --gibber; // prior to last cha
-                Serial.print("\33[D \33[D");
-                goto chew;
                 break;
             }
             break;
@@ -259,6 +275,16 @@ void parse_bite(char bite) {
                 }
             }
             break;
+        case COMMENT:
+            if (bite == '\r') {
+                parseme = SYMBOL;
+                goto parse;
+            }
+            if (bite == ';') {
+                color(BLACK);
+                goto send_bite;
+            }
+            break;
         } // ends switch(parseme)
         if (phoneme & GLYPH) {
             //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
@@ -276,21 +302,7 @@ void parse_bite(char bite) {
         if(parseme != SYMBOL || phoneme == SPACE) {
             lexeme = CDR;
         }
-}
-
-void dancer() { // first of the reindeer, 0.2
-// dancer is a colorful parser.
-// dancer consumes one letter at a time.
-chew:
-    char bite;
-    phoneme = 0;
-    if (Serial.available() && (bite = Serial.read())) {
-        gabber(bite);
-//     herpderp(bite);    // forget the derp for now
-parse:      // Djikstra forgive me. Knuth would understand.
-
 report:
-        parse_bite(bite);
         switch(phoneme) {
         case LETTER :
             if (was_cha == RUNE && !head) {
