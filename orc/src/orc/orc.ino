@@ -35,7 +35,7 @@
 #define COMMENT    21
 #define ESCAPE     27
 #define JANK       29
-#define LAMBDA     93
+#define LAMBDA     93      // LAMBDA and FAIL independent of others.
 #define FAIL       42
 
 /*
@@ -231,7 +231,7 @@ parse:
             break;
         case '"' :
             parseme = STRING;
-            phoneme = ESCAPE; // reused for jump
+            phoneme = RUNE;
             head = false;
             goto parse;
         case ';' :
@@ -264,8 +264,8 @@ parse:
         }
         break;
     case STRING: // include escaping logic, for now, close on "
-        if (phoneme == ESCAPE) {
-            phoneme = QUOTE;
+        if (phoneme == RUNE) {
+            phoneme = QUOTE; // this reclasses the initial `"`
         } else {
             if (bite == '"') {
                 parseme = SYMBOL;
