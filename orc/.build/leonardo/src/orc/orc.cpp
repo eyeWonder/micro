@@ -73,7 +73,7 @@ char gibber = 0;
 char derp = 0;
 char was_cha = 0;
 
-bool online = false ; // useless replace with state
+bool online = true ; // useless replace with state
 
 static void color(char foreground) { // prints a foreground color, for now
     // bum: bitfield: @@@@$$$$

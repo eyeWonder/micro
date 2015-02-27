@@ -27,13 +27,15 @@ void loop();
 #define DRPMAX     64
 
 //Phonemes
-#define LETTER     2
-#define RUNE       4
-#define PEL        5
-#define DIGIT      6
-#define PER        7
-#define SPACE      8
-#define QUOTE      9
+#define LETTER     0b00000001          // 1
+#define RUNE       0b00000010          // 2
+#define PEL        0b00000100          // 4
+#define DIGIT      0b00001000          // 8
+#define PER        0b00010000          // 16
+#define SPACE      0b00100000          // 32
+#define QUOTE      0b01000000          // 64
+
+#define GLYPH      0b00000011          // LETTER | RUNE     
 
 //Lexemes
 #define CAR        12
@@ -47,8 +49,8 @@ void loop();
 #define COMMENT    21
 #define ESCAPE     27
 #define JANK       29
+#define LAMBDA     93
 #define FAIL       42
-#define REUP       69 //this is slightly kludgey
 
 /*
 typedef slot {  // holds userdata
@@ -63,6 +65,7 @@ char bracecount = 0;
 char state = 0;                // online or not
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
+char phoneme = 0;
 bool head = false;           // head or tail of symbol
 char gab[GABMAX];
 char drp[DRPMAX];
@@ -195,107 +198,12 @@ void dancer() { // first of the reindeer, 0.2
 // dancer consumes one letter at a time.
 chew:
     char bite;
-    char phoneme = 0;
+    phoneme = 0;
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
 parse:      // Djikstra forgive me. Knuth would understand.
-        switch (parseme) {
-        case SYMBOL:         // parseme == symbol
-            if (('0' <= bite) && (bite <= '9')) {
-                phoneme = DIGIT;
-                parseme = NUMBER;
-                head = false;
-            }
-            if (rune(bite)) {
-                phoneme = RUNE;
-            }
-            if (('A' <= bite) && (bite <= 'z') && phoneme != RUNE) {
-                phoneme = LETTER;
-            }
-            switch(bite) {
-            case '(' :
-                phoneme = PEL;
-                lexeme = CAR;
-                head = true;
-                ++bracecount;
-                break;
-            case ')' :
-                phoneme = PER;
-                if (bracecount >= 0) {
-                    --bracecount;
-                } else {
-                    bracecount = -1; // lower bound -1
-                }
-                break;
-            case '"' :
-                parseme = STRING;
-                phoneme = REUP; // special phoneme for back goto
-                head = false;
-                goto parse;
-            case '\r' :
-                phoneme = SPACE;
-                clear();
-                Serial.print("\r\n"); //jumpcall
-                for (byte i = 0 ; i < gibber; i++) {
-                    Serial.print(char(gab[i])); //diagnostic
-                }
-                gibber = -1;
-                Serial.print("\r\n");
-                break;
-            case ' ' :
-                phoneme = SPACE;
-                head = false;
-                break;
-            case 127 : // delete key
-                // move to own function, protect against deletes past zero!
-                --gibber; // walk back to last cha
-                if (gab[gibber] == '(') {
-                    --bracecount;
-                }
-                if (gab[gibber] == ')') {
-                    ++bracecount;
-                }
-                --gibber; // prior to last cha
-                Serial.print("\33[D \33[D");
-                goto chew;
-                break;
-            }
-            break;
-        case NUMBER:
-            if (!('0' <= bite) || !(bite <= '9')) {
-                parseme = SYMBOL;
-                goto parse;
-            }
-            break;
-        case STRING: // include escaping logic, for now, close on "
-            if (phoneme == REUP) {
-                phoneme = QUOTE;
-            } else {
-                if (bite == '"') {
-                    parseme = SYMBOL;
-                    color(YELLOW);
-                    goto send_bite;
-                }
-            }
-            break;
-        } // ends switch(parseme)
-        if (phoneme & (LETTER | RUNE)) {
-          //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
-          if (was_cha & (LETTER | RUNE)) {
-                head = !head;
-            } else {
-                head = true;
-            }
-        }
-        if ((phoneme == RUNE) && (was_cha == LETTER) && !head) {
-            Serial.print("\33[D"); // generalize jump command
-            color(GREEN);
-            Serial.print(char(gab[gibber-1]));
-        }
-        if(parseme != SYMBOL || phoneme == SPACE) {
-            lexeme = CDR;
-        }
+
 report:
         switch(phoneme) {
         case LETTER :
@@ -329,9 +237,6 @@ report:
                 color((bracecount % 8)+1);
             }
             break;
-        case SPACE :
-            clear(); //shouldn't need
-            break;
         }
         switch(lexeme) {
         case CAR:
@@ -349,8 +254,9 @@ send_bite:
         }
         Serial.print(gab[gibber]);
         //setup next loop
+next:
         was_cha = phoneme;
-        if(!head && (was_cha & (LETTER | RUNE))) {
+        if(!head && (was_cha & GLYPH)) {
             lexeme = CDR;
         }
     }
