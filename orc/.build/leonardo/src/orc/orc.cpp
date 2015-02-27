@@ -43,8 +43,8 @@ void loop();
 //Parsemes
 #define SYMBOL     17
 #define NUMBER     18
-#define STRING     19
-#define COMMENT    20
+#define STRING     20
+#define COMMENT    21
 #define ESCAPE     27
 #define JANK       29
 #define FAIL       42
@@ -60,7 +60,6 @@ const char CLR[] = "\33[30m";
 
 char bracecount = 0;
 char state = 0;                // online or not
-char phoneme = 0;              // type of letter detected
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
 bool head = false;           // head or tail of symbol
@@ -195,6 +194,7 @@ void dancer() { // first of the reindeer, 0.2
 // dancer consumes one letter at a time.
 chew:
     char bite;
+    char phoneme = 0;
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -221,7 +221,6 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 break;
             case ')' :
                 phoneme = PER;
-                parseme = 0;
                 if (bracecount >= 0) {
                     --bracecount;
                 } else {
@@ -283,13 +282,18 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
+   /*     if ((phoneme == LETTER) && (was_cha == RUNE) && !head) {
+            Serial.print("\33[D»»»"); // generalize jump command
+            color(GREEN);
+            Serial.print(char(gab[gibber-1]));
+        } */
         if(parseme != SYMBOL) {
             lexeme = CDR;
         }
 report:
         switch(phoneme) {
         case LETTER :
-            color(RESET);
+            color(WHITE);
             break;
         case RUNE   :
             color(GREEN);
@@ -320,10 +324,10 @@ report:
         }
         switch(lexeme) {
         case CAR:
-            printabove('>');
+            Serial.print("\33[46m");
             break;
         case CDR:
-            printabove('<');
+            Serial.print("\33[49m");
             break;
         }
 send_bite:
