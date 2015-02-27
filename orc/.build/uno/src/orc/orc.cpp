@@ -48,6 +48,7 @@ void loop();
 #define ESCAPE     27
 #define JANK       29
 #define FAIL       42
+#define REUP       69 //this is slightly kludgey
 
 /*
 typedef slot {  // holds userdata
@@ -60,7 +61,6 @@ const char CLR[] = "\33[30m";
 
 char bracecount = 0;
 char state = 0;                // online or not
-char phoneme = 0;              // type of letter detected
 char lexeme  = CAR;              // place in symbol order.
 char parseme = SYMBOL;              // parser at work
 bool head = false;           // head or tail of symbol
@@ -195,6 +195,7 @@ void dancer() { // first of the reindeer, 0.2
 // dancer consumes one letter at a time.
 chew:
     char bite;
+    char phoneme = 0;
     if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -229,7 +230,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 break;
             case '"' :
                 parseme = STRING;
-                phoneme = 0; // this lets us do escaping.
+                phoneme = REUP; // special phoneme for back goto
                 head = false;
                 goto parse;
             case '\r' :
@@ -240,7 +241,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                     Serial.print(char(gab[i])); //diagnostic
                 }
                 gibber = -1;
-                Serial.print("\r\n\r\n");
+                Serial.print("\r\n");
                 break;
             case 127 : // delete key
                 // move to own function, protect against deletes past zero!
@@ -264,11 +265,12 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         case STRING: // include escaping logic, for now, close on "
-            if (phoneme == 0) {
+            if (phoneme == REUP) {
                 phoneme = QUOTE;
             } else {
                 if (bite == '"') {
                     parseme = SYMBOL;
+                    Serial.print("»»»");
                     color(YELLOW);
                     goto send_bite;
                 }
@@ -282,18 +284,18 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
-        if ((phoneme == LETTER) && (was_cha == RUNE) && !head) {
-            Serial.print("\33[D"); // generalize jump command
-            color(GREEN);
-            Serial.print(char(gab[gibber-1]));
-        }
-        if(parseme != SYMBOL && parseme != PAREN ) {
+        /*     if ((phoneme == LETTER) && (was_cha == RUNE) && !head) {
+                 Serial.print("\33[D»»»"); // generalize jump command
+                 color(GREEN);
+                 Serial.print(char(gab[gibber-1]));
+             } */
+        if(parseme != SYMBOL) {
             lexeme = CDR;
         }
 report:
         switch(phoneme) {
         case LETTER :
-            color(RESET);
+            color(WHITE);
             break;
         case RUNE   :
             color(GREEN);
@@ -327,7 +329,7 @@ report:
             Serial.print("\33[46m");
             break;
         case CDR:
-    Serial.print("\33[49m");
+            Serial.print("\33[49m");
             break;
         }
 send_bite:

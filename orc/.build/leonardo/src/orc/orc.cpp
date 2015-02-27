@@ -48,6 +48,7 @@ void loop();
 #define ESCAPE     27
 #define JANK       29
 #define FAIL       42
+#define REUP       69 //this is slightly kludgey
 
 /*
 typedef slot {  // holds userdata
@@ -229,7 +230,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 break;
             case '"' :
                 parseme = STRING;
-                phoneme = 0; // this lets us do escaping.
+                phoneme = REUP; // special phoneme for back goto
                 head = false;
                 goto parse;
             case '\r' :
@@ -264,12 +265,12 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         case STRING: // include escaping logic, for now, close on "
-            if (phoneme == 0) {
+            if (phoneme == REUP) {
                 phoneme = QUOTE;
             } else {
                 if (bite == '"') {
                     parseme = SYMBOL;
-                    Serial.print("»»»")
+                    Serial.print("»»»");
                     color(YELLOW);
                     goto send_bite;
                 }
@@ -283,11 +284,11 @@ parse:      // Djikstra forgive me. Knuth would understand.
                 head = true;
             }
         }
-   /*     if ((phoneme == LETTER) && (was_cha == RUNE) && !head) {
-            Serial.print("\33[D»»»"); // generalize jump command
-            color(GREEN);
-            Serial.print(char(gab[gibber-1]));
-        } */
+        /*     if ((phoneme == LETTER) && (was_cha == RUNE) && !head) {
+                 Serial.print("\33[D»»»"); // generalize jump command
+                 color(GREEN);
+                 Serial.print(char(gab[gibber-1]));
+             } */
         if(parseme != SYMBOL) {
             lexeme = CDR;
         }
