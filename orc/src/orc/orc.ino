@@ -21,6 +21,8 @@
 #define SPACE      64
 #define QUOTE      128
 
+#define GLYPH      (LETTER | RUNE)     
+
 //Lexemes
 #define CAR        12
 #define CDR        14
@@ -266,7 +268,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         } // ends switch(parseme)
-        if (phoneme & (LETTER | RUNE)) {
+        if (phoneme & GLYPH) {
             //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
             if (was_cha & (LETTER | RUNE)) {
                 head = !head;
@@ -336,7 +338,7 @@ send_bite:
         Serial.print(gab[gibber]);
         //setup next loop
         was_cha = phoneme;
-        if(!head && (was_cha & (LETTER | RUNE))) {
+        if(!head && (was_cha & GLYPH)) {
             lexeme = CDR;
         }
     }
