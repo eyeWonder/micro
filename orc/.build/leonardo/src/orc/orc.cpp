@@ -217,7 +217,7 @@ parse:
     }
     switch (parseme) {
     case SYMBOL:         // parseme == symbol
-        if (('0' <= bite) && (bite <= '9')) {
+        if ('0' <= bite && bite <= '9') {
             phoneme = DIGIT;
             parseme = NUMBER;
             head = false;
@@ -225,7 +225,7 @@ parse:
         if (rune(bite)) {
             phoneme = RUNE;
         }
-        if (('A' <= bite) && (bite <= 'z') && phoneme != RUNE) {
+        if ('A' <= bite && bite <= 'z' && phoneme != RUNE) {
             phoneme = LETTER;
         }
         switch(bite) {
@@ -314,7 +314,7 @@ parse:
             head = true;
         }
     }
-    if ((phoneme == RUNE) && (was_cha == LETTER) && !head) {
+    if (phoneme == RUNE && was_cha == LETTER && !head) {
         Serial.print("\33[D"); // generalize jump command
         color(GREEN);
         Serial.print(char(gab[gibber-1]));
@@ -376,7 +376,7 @@ send_bite:
 
 next:
     was_cha = phoneme;
-    if(!head && (was_cha & GLYPH)) {
+    if(!head && was_cha & GLYPH) {
         lexeme = CDR;
     }
 }
