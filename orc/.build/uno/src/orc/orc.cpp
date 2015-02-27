@@ -276,8 +276,8 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         } // ends switch(parseme)
-        if ((parseme == SYMBOL) && (phoneme == LETTER || phoneme == RUNE)) {
-            if (head) {               // ^--should be redundant?
+        if ((phoneme == LETTER || phoneme == RUNE)) {
+            if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
                 head = false;
             } else {
                 head = true;
@@ -294,8 +294,12 @@ parse:      // Djikstra forgive me. Knuth would understand.
 report:
         switch(phoneme) {
         case LETTER :
-            if (was_cha != RUNE) {
-                color(WHITE);}else{color(GREEN);}
+            if (was_cha == RUNE) {
+                color(GREEN);
+            }
+            else {
+                color(WHITE);
+            }
             break;
         case RUNE   :
             color(GREEN);
@@ -338,8 +342,11 @@ send_bite:
         } else {
             Serial.print("\33[24m");
         }
-        was_cha = phoneme;
         Serial.print(gab[gibber]);
+        //setup next loop
+                was_cha = phoneme;
+        if(!head &&(was_cha == LETTER || was_cha == RUNE)) {
+            lexeme = CDR;}
     }
 }
 void setup() {

@@ -288,16 +288,13 @@ parse:      // Djikstra forgive me. Knuth would understand.
             color(GREEN);
             Serial.print(char(gab[gibber-1]));
         }
-/*        if(!head &&(was_cha == LETTER || was_cha == RUNE)) {
-            lexeme = CDR;
-        } */
         if(parseme != SYMBOL) {
             lexeme = CDR;
         }
 report:
         switch(phoneme) {
         case LETTER :
-            if (was_cha == RUNE) {
+            if (was_cha == RUNE && !head) {
                 color(GREEN);
             }
             else {
@@ -333,7 +330,7 @@ report:
         }
         switch(lexeme) {
         case CAR:
-            Serial.print("\33[46m");
+            Serial.print("\33[40m");
             break;
         case CDR:
             Serial.print("\33[49m");
@@ -345,8 +342,12 @@ send_bite:
         } else {
             Serial.print("\33[24m");
         }
-        was_cha = phoneme;
         Serial.print(gab[gibber]);
+        //setup next loop
+        was_cha = phoneme;
+        if(!head &&(was_cha == LETTER || was_cha == RUNE)) {
+            lexeme = CDR;
+        }
     }
 }
 void setup() {
