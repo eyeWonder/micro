@@ -182,25 +182,26 @@ void printabove(char above) {
 void dancer() { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-chew:
+
+    if (Serial.available() && (bite = Serial.read())) {
+chew:  // Djikstra forgive me. Knuth would understand.
     char bite;
     phoneme = 0;
-    if (Serial.available() && (bite = Serial.read())) {
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
-parse:      // Djikstra forgive me. Knuth would understand.
-                    if (bite == 127) { // delete key
-                // move to own function, protect against deletes past zero!
-                --gibber; // walk back to last cha
-                if (gab[gibber] == '(') {
-                    --bracecount;
-                }
-                if (gab[gibber] == ')') {
-                    ++bracecount;
-                }
-                --gibber; // prior to last cha
-                Serial.print("\33[D \33[D");
-                goto chew;
+parse:      
+        if (bite == 127) { // delete key
+            // move to own function, protect against deletes past zero!
+            --gibber; // walk back to last cha
+            if (gab[gibber] == '(') {
+                --bracecount;
+            }
+            if (gab[gibber] == ')') {
+                ++bracecount;
+            }
+            --gibber; // prior to last cha
+            Serial.print("\33[D \33[D");
+            goto chew;
         }
         switch (parseme) {
         case SYMBOL:         // parseme == symbol

@@ -182,13 +182,13 @@ void printabove(char above) {
 void dancer() { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-chew:
     char bite;
-    phoneme = 0;
     if (Serial.available() && (bite = Serial.read())) {
+chew:  // Djikstra forgive me. Knuth would understand.
+        phoneme = 0;
         gabber(bite);
 //     herpderp(bite);    // forget the derp for now
-parse:      // Djikstra forgive me. Knuth would understand.
+parse:
         if (bite == 127) { // delete key
             // move to own function, protect against deletes past zero!
             --gibber; // walk back to last cha
