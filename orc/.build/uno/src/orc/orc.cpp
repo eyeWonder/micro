@@ -43,14 +43,14 @@ void loop();
 #define ERROR      15
 
 //Parsemes
-#define SYMBOL     17
-#define NUMBER     18
-#define STRING     20
-#define COMMENT    21
-#define ESCAPE     27
-#define JANK       29
-#define LAMBDA     93      // LAMBDA and FAIL independent of others.
-#define FAIL       42
+#define SYMBOL     0b00000001
+#define NUMBER     0b00000010
+#define STRING     0b00000100
+#define COMMENT    0b00001000
+#define ESCAPE     0b00010000
+#define JANK       0b00100000
+#define LAMBDA     0b01000000      // LAMBDA and FAIL independent of others.
+#define FAIL       0b10000000
 
 /*
 typedef slot {  // holds userdata
@@ -279,7 +279,7 @@ parse:
         break;
     case STRING: // include escaping logic, for now, close on "
         if (phoneme == RUNE) {
-            phoneme = QUOTE; 
+            phoneme = QUOTE; // this reclasses the initial `"`
         } else {
             if (bite == '"') {
                 parseme = SYMBOL;
