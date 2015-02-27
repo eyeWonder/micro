@@ -278,7 +278,7 @@ parse:      // Djikstra forgive me. Knuth would understand.
         } // ends switch(parseme)
         if ((phoneme == LETTER || phoneme == RUNE)) {
             if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
-                head = false;
+                head = !head;
             } else {
                 head = true;
             }
