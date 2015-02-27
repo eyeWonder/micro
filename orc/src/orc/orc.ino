@@ -289,6 +289,9 @@ parse:
         // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
         break;
+    case JANK:
+        // handle 'jank64' encoding.
+        break;
     }   // ends switch(parseme)
     if (phoneme & GLYPH) {
         if (was_cha & (LETTER | RUNE)) {
@@ -373,7 +376,6 @@ void setup() {
 }
 
 void loop() {
-    char bite;
     if (state < 4 && online == false) { // state should be negative when not interacting
         cheer();
     }
@@ -383,9 +385,8 @@ void loop() {
             Serial.print("\r\n\n(");
             state = CAR;
         } else {
-            if (Serial.available() && (bite = Serial.read())) {
-                dancer(bite);
-            }
+            if (Serial.available())
+                dancer(Serial.read());
         }
     }
 }
