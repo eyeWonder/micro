@@ -27,13 +27,13 @@ void loop();
 #define DRPMAX     64
 
 //Phonemes
-#define LETTER     1
-#define RUNE       2
-#define PEL        3
-#define DIGIT      4
-#define PER        5
-#define SPACE      6
-#define QUOTE      7
+#define LETTER     2
+#define RUNE       4
+#define PEL        5
+#define DIGIT      6
+#define PER        7
+#define SPACE      8
+#define QUOTE      9
 
 //Lexemes
 #define CAR        12
@@ -280,8 +280,9 @@ parse:      // Djikstra forgive me. Knuth would understand.
             }
             break;
         } // ends switch(parseme)
-        if ((phoneme == LETTER || phoneme == RUNE)) {
-            if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
+        if (phoneme & (LETTER | RUNE)) {
+          //  if ((was_cha == LETTER) || (was_cha == RUNE)) {               // ^--should be redundant?
+          if (was_cha & (LETTER | RUNE)) {
                 head = !head;
             } else {
                 head = true;
@@ -349,7 +350,7 @@ send_bite:
         Serial.print(gab[gibber]);
         //setup next loop
         was_cha = phoneme;
-        if(!head &&(was_cha == LETTER || was_cha == RUNE)) {
+        if(!head && (was_cha & (LETTER | RUNE))) {
             lexeme = CDR;
         }
     }
