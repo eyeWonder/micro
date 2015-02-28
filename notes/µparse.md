@@ -26,7 +26,4 @@ Orcs also recognize the esc sequence and must minimally ignore all input until t
 
 Orcs are not guaranteed to have a consistent short form and it is never used to communicate. A set high bit makes a character out of band. Any other capability is found in the standard library, and may be emulated on a core level by manually sending or reading a byte to the appropriate pin. 
 
-## The Very Special Parser
-
-Each character is its own parser, responsible for setting paths through a 
 

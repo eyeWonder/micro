@@ -20,6 +20,7 @@
 #define PER        0b00010000          // 16
 #define SPACE      0b00100000          // 32
 #define QUOTE      0b01000000          // 64
+#define OUTOFBAND  0b10000000          //
 
 #define GLYPH      0b00000011          // LETTER | RUNE     
 
@@ -199,7 +200,7 @@ parse:
         }
         --gibber; // prior to last cha
         Serial.print("\33[D \33[D");
-        goto chew;
+        return;
     }
     switch (parseme) {
     case SYMBOL:         // parseme == symbol
@@ -362,7 +363,7 @@ send_bite:
 
 next:
     was_cha = phoneme;
-    if(!head && was_cha & GLYPH) {
+    if (!head && was_cha & GLYPH) {
         lexeme = CDR;
     }
 }

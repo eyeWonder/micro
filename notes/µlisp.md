@@ -12,7 +12,7 @@ The numeric values `0-9` always make numbers. This is the most important rule: o
 
 The other characters are glyphs, and combine in three classes: runes, letters, and spaces. space-qua-space, newline, and comma are accepted as spaces, with unique semantics in the short form.  A single rune or letter followed by a space is a distinct command, and is the same as that rune or letter followed directly by a number, so `A 12` and `# f` are equal to `A12` and `#f`. Note that µlisp uses only and always hexadecimal values. 
 
-Each rune is a parsing engine with particular rules associated with it. Some, notably `(` and `)`, may not be combined with other runes in any form. Others such as `;` for comment and `"` for string, consume larger amounts of the input stream, and may not be followed by other values to compose a symbol. `"` may be preceded by another glyph to compose a different symbol, `;` may not be. 
+Each rune is a parsing engine with particular rules associated with it. Some, notably `(` and `)`, may not be combined with other runes in any form. Others such as `;` for comment and `"` for string, consume larger amounts of the input stream, and may not be followed by other values to compose a symbol. `"` may(?) be preceded by another glyph to compose a different symbol, `;` may not be. 
 
 ###Specifics
 
