@@ -39,6 +39,13 @@
 #define LAMBDA     0b01000000      // LAMBDA and FAIL independent of others.
 #define FAIL       0b10000000
 
+//Modes
+
+#define PARSE  1
+#define EVAL   2
+#define PRINT  4
+#define EDIT   8
+
 /*
 typedef slot {  // holds userdata
  // union type, 32 bits
@@ -48,12 +55,55 @@ typedef slot {  // holds userdata
 const char HI[] = "@rk!";
 const char CLR[] = "\33[30m";
 
-char bracecount = 0;
-char state = 0;                // online or not
-char lexeme  = CAR;              // place in symbol order.
-char parseme = SYMBOL;              // parser at work
-char phoneme = 0;
-bool head = false;           // head or tail of symbol
+// these will not need inits
+char bracecount;
+char state;                // online or not
+char mode;                // parse/eval/edit/etc.
+char lexeme;              // place in symbol order.
+char parseme;              // parser at work
+char phoneme;
+bool head;           // head or tail of symbol
+
+struct {
+    char bracecount;
+    char state;
+    char mode;
+    char lexeme;
+    char parseme;
+    char phoneme;
+    bool head;
+} stash;
+
+static void init_stash() {
+    stash.bracecount = 0;
+    stash.state      = 0;
+    stash.mode       = PARSE;
+    stash.lexeme     = CAR;
+    stash.parseme    = SYMBOL;
+    stash.phoneme    = 0;
+    stash.head       = false;
+}
+
+static void stash_parser() {
+    stash.bracecount = bracecount;
+    stash.state      = state;
+    stash.mode       = mode;
+    stash.lexeme     = lexeme;
+    stash.parseme    = parseme;
+    stash.phoneme    = phoneme;
+    stash.head       = head;
+}
+
+static void restore_parser() {
+    bracecount =  stash.bracecount;
+    state      =  stash.state;
+    mode       =  stash.mode;
+    lexeme     =  stash.lexeme;
+    parseme    =  stash.parseme;
+    phoneme    =  stash.phoneme;
+    head       =  stash.head;
+}
+
 char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
@@ -136,13 +186,17 @@ static void putdec( int16_t n ) {
 }
 
 static void gabber(char front) {
-    if (gibber < GABMAX-1) {
-        gab[++gibber] = front;
-    } else {
-        //  color(RED); Serial.print('*'); color(RESET);
-        gibber = 1;
-        gab[0] = gab[GABMAX-1];
-        gab[1] = front;
+    if (mode == PARSE) { // we are recording keystrokes
+        if (gibber < GABMAX-1) {
+            gab[++gibber] = front;
+        } else {
+            //  color(RED); Serial.print('*'); color(RESET);
+            gibber = 1;
+            gab[0] = gab[GABMAX-1];
+            gab[1] = front;
+        }
+    } else { // we merely advance the gibber
+        gibber++;
     }
 }
 
@@ -159,14 +213,19 @@ static void herpderp(char front) {
 void dancer(char bite) ;
 
 static void backspace() {
-    // protect against deletes past zero!
+    char modeset = mode;
+    char gibset = 0;
     if (gibber >= 0) --gibber; // walk back to last cha
-    if (gab[gibber] == '(')
+    if (gab[gibber] == '(') {
         --bracecount;
+    }
     if (gab[gibber] == ')')
         ++bracecount;
-    --gibber; // prior to last cha
-    Serial.print("\33[D \33[D");
+    mode = PRINT;
+    do {
+        dancer(gab[gibber]); // +1?
+    } while (gibber < gibset);
+    mode = modeset;
 }
 
 static bool rune(char cha) {
@@ -377,6 +436,8 @@ void setup() {
     gab[0] = '(';
     drp[0] = '(';
     state = 0;
+    init_stash();           // these two set up
+    restore_parser();        // our parsing engine
     Serial.begin(9600);
 }
 
