@@ -94,7 +94,7 @@ struct {
 
 static void init_stash() {
     stash.bracecount = 0;
-    stash.state      = 0;
+    //stash.state      = 0;
     stash.mode       = PARSE;
     stash.lexeme     = CAR;
     stash.parseme    = SYMBOL;
@@ -104,7 +104,7 @@ static void init_stash() {
 
 static void stash_parser() {
     stash.bracecount = bracecount;
-    stash.state      = state;
+    //stash.state      = state;
     stash.mode       = mode;
     stash.lexeme     = lexeme;
     stash.parseme    = parseme;
@@ -114,7 +114,7 @@ static void stash_parser() {
 
 static void restore_parser() {
     bracecount =  stash.bracecount;
-    state      =  stash.state;
+    //state      =  stash.state;
     mode       =  stash.mode;
     lexeme     =  stash.lexeme;
     parseme    =  stash.parseme;
@@ -237,9 +237,14 @@ static void backspace() {
     if (gab[gibber] == '(') {
         --bracecount;
     }
-    if (gab[gibber] == ')')
+    if (gab[gibber] == ')') {
         ++bracecount;
+    }
+    restore_parser(); // we (will) stash at every newline
     mode = PRINT;
+    Serial.print("\r\n");
+    gibset = gibber -1 ;
+    gibber = -1;
     do {
         dancer(gab[gibber]); // +1?
     } while (gibber < gibset);
@@ -322,6 +327,7 @@ parse:
             break;
         case '\r' :
             phoneme = SPACE;
+            stash_parser(); // enables delete key
             //<diagnostic>
             clear();
             Serial.print("\r\n"); //jumpcall
