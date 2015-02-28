@@ -190,7 +190,9 @@ static void gabber(char front) {
         if (gibber < GABMAX-1) {
             gab[++gibber] = front;
         } else {
-            color(RED); Serial.print('*'); color(RESET);
+            color(RED);
+            Serial.print('*');
+            color(RESET);
             gibber = 1;
             gab[0] = gab[GABMAX-1];
             gab[1] = front;
@@ -215,21 +217,21 @@ void dancer(char bite) ;
 static void backspace() {
     char modeset = mode;
     char gibset = 0;
-    if (gibber >= 0) --gibber; // walk back to last cha
-    /*    if (gab[gibber] == '(') {
-            --bracecount;
-        }
-        if (gab[gibber] == ')') {
-            ++bracecount;
-        } */
     restore_parser(); // we stash at every newline
     mode = PRINT;
-    Serial.print('\r\33[J'); // return and clear line
-    gibset = gibber -1 ;
-    gibber = -1;
+    Serial.print("\r\33[K");   // return and clear line
+    if (gibber >= 0) {
+        gibset = gibber -1;
+    } else {
+        return;
+    }
+    gibber = 0;
+    if (gibset >= 0) {
     do {
         dancer(gab[gibber]); // +1?
     } while (gibber < gibset);
+}
+    gibber--;
     mode = modeset;
 }
 
@@ -310,7 +312,7 @@ parse:
         case '\r' :
             stash_parser(); // enables delete key
             phoneme = SPACE;
-            
+
             //<diagnostic>
             clear();
             Serial.print("\r\n"); //jumpcall
