@@ -197,7 +197,6 @@ void printabove(char above) {
 void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-chew:  // Djikstra forgive me. Knuth would understand.
     phoneme = 0;
     gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -286,7 +285,7 @@ parse:
                 parseme = SYMBOL;
                 color(YELLOW);
                 goto send_bite;
-            }
+            } else goto send_bite;
         }
         break;
     case COMMENT:
@@ -298,6 +297,7 @@ parse:
             color(BLACK);
             goto send_bite;
         }
+        goto send_bite;
         break;
     case ESCAPE:
         // handle ANSI escape sequences
