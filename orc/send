@@ -14,4 +14,4 @@ sleep 1
 #This replicates "newtab" function because of some weird environment thing.
 osascript -e 'tell application "Terminal" to activate' \
   -e 'tell application "System Events" to tell process "Terminal" to keystroke "t" using command down' \
-  -e 'tell application "Terminal" to do script "screen /dev/tty.usbmodem1411 57600" in selected tab of the front window'
+  -e 'tell application "Terminal" to do script "screen /dev/tty.usbmodem1421 57600" in selected tab of the front window'

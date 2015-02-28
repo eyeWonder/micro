@@ -1,15 +1,15 @@
 
 #ino clean
 
-if ino build -m leonardo
+ino build -m leonardo
 #ino build -m mega2560
 #ino build -m uno
 
-  until ino upload -m leonardo
+until ino upload -m leonardo
   do 
-      echo "didn't upload"
+    echo "didn't upload"
   done
-done
+
 sleep 1
 #This replicates "newtab" function because of some weird environment thing.
 osascript -e 'tell application "Terminal" to activate' \

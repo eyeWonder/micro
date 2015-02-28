@@ -35,7 +35,7 @@ void loop();
 #define PER        0b00010000          // 16
 #define SPACE      0b00100000          // 32
 #define QUOTE      0b01000000          // 64
-#define OUTOFBAND  0b10000000          //
+#define OUTOFBAND  0b10000000          // 128
 
 #define GLYPH      0b00000011          // LETTER | RUNE     
 
@@ -171,15 +171,15 @@ static void herpderp(char front) {
     }
 }
 
+void dancer(char bite) ;
+
 static void backspace() {
     // protect against deletes past zero!
-    --gibber; // walk back to last cha
-    if (gab[gibber] == '(') {
+    if (gibber >= 0) --gibber; // walk back to last cha
+    if (gab[gibber] == '(')
         --bracecount;
-    }
-    if (gab[gibber] == ')') {
+    if (gab[gibber] == ')')
         ++bracecount;
-    }
     --gibber; // prior to last cha
     Serial.print("\33[D \33[D");
 }
@@ -290,7 +290,7 @@ parse:
                 parseme = SYMBOL;
                 color(YELLOW);
                 goto send_bite;
-            } else goto send_bite;
+            } else phoneme = QUOTE;
         }
         break;
     case COMMENT:
@@ -302,7 +302,7 @@ parse:
             color(BLACK);
             goto send_bite;
         }
-        goto send_bite;
+        phoneme;
         break;
     case ESCAPE:
         // handle ANSI escape sequences
