@@ -217,7 +217,7 @@ void dancer(char bite) ;
 static void backspace() {
     char modeset = mode;
     char gibset = 0;
-    if (gibber >= 0) --gibber; // walk back to last cha
+ //   if (gibber >= 0) --gibber; // walk back to last cha
     /*    if (gab[gibber] == '(') {
             --bracecount;
         }
@@ -226,13 +226,14 @@ static void backspace() {
         } */
     restore_parser(); // we stash at every newline
     mode = PRINT;
-    Serial.print('\r');      // return 
+    Serial.print("\r");      // return 
     Serial.print("\33[K");   // clear line
     gibset = gibber -1 ;
-    gibber = -1;
+    gibber = 0;
     do {
         dancer(gab[gibber]); // +1?
     } while (gibber < gibset);
+    gibber--;
     mode = modeset;
 }
 
