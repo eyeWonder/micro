@@ -6,6 +6,7 @@ static void cheer();
 static void putdec( int16_t n );
 static void gabber(char front);
 static void herpderp(char front);
+static void backspace();
 static bool rune(char cha);
 void printabove(char above);
 void dancer(char bite);
@@ -170,6 +171,19 @@ static void herpderp(char front) {
     }
 }
 
+static void backspace() {
+    // protect against deletes past zero!
+    --gibber; // walk back to last cha
+    if (gab[gibber] == '(') {
+        --bracecount;
+    }
+    if (gab[gibber] == ')') {
+        ++bracecount;
+    }
+    --gibber; // prior to last cha
+    Serial.print("\33[D \33[D");
+}
+
 static bool rune(char cha) {
     //determines a glyph.
     if ((32 < cha) && (cha < 48) && !(cha == '(' || cha == ')')) {
@@ -203,16 +217,7 @@ void dancer(char bite) { // first of the reindeer, 0.2
 
 parse:
     if (bite == 127) { // delete key
-        // move to own function, protect against deletes past zero!
-        --gibber; // walk back to last cha
-        if (gab[gibber] == '(') {
-            --bracecount;
-        }
-        if (gab[gibber] == ')') {
-            ++bracecount;
-        }
-        --gibber; // prior to last cha
-        Serial.print("\33[D \33[D");
+        backspace();
         return;
     }
     switch (parseme) {

@@ -20,7 +20,7 @@
 #define PER        0b00010000          // 16
 #define SPACE      0b00100000          // 32
 #define QUOTE      0b01000000          // 64
-#define OUTOFBAND  0b10000000          // 128
+#define OUTOFBAND  0b10000000          //
 
 #define GLYPH      0b00000011          // LETTER | RUNE     
 
@@ -155,19 +155,20 @@ static void herpderp(char front) {
         drp[1] = front;
     }
 }
-/*
+
 static void backspace() {
-    --gibber; // walk back to last cha
-    if (gab[gibber] == '(') {
-        --bracecount;
-    }
-    if (gab[gibber] == ')') {
-        ++bracecount;
-    }
-    --gibber; // prior to last cha
-    Serial.print("\33[D \33[D");
+    // protect against deletes past zero!
+            --gibber; // walk back to last cha
+        if (gab[gibber] == '(') {
+            --bracecount;
+        }
+        if (gab[gibber] == ')') {
+            ++bracecount;
+        }
+        --gibber; // prior to last cha
+        Serial.print("\33[D \33[D");
 }
-*/
+
 static bool rune(char cha) {
     //determines a glyph.
     if ((32 < cha) && (cha < 48) && !(cha == '(' || cha == ')')) {
@@ -195,28 +196,17 @@ void printabove(char above) {
 void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
-chew:  // Djikstra forgive me. Knuth would understand.
     phoneme = 0;
     gabber(bite);
 //     herpderp(bite);    // forget the derp for now
 
 parse:
     if (bite == 127) { // delete key
-        // move to own function, protect against deletes past zero!
-        //backspace();
-           --gibber; // walk back to last cha
-    if (gab[gibber] == '(') {
-        --bracecount;
-    }
-    if (gab[gibber] == ')') {
-        ++bracecount;
-    }
-    --gibber; // prior to last cha
-    Serial.print("\33[D \33[D");
-        goto chew;
+        backspace();
+        return;
     }
     switch (parseme) {
-    case SYMBOL:
+    case SYMBOL:         // parseme == symbol
         if ('0' <= bite && bite <= '9') {
             phoneme = DIGIT;
             parseme = NUMBER;
@@ -285,7 +275,7 @@ parse:
                 parseme = SYMBOL;
                 color(YELLOW);
                 goto send_bite;
-            }
+            } else goto send_bite;
         }
         break;
     case COMMENT:
@@ -297,6 +287,7 @@ parse:
             color(BLACK);
             goto send_bite;
         }
+        goto send_bite;
         break;
     case ESCAPE:
         // handle ANSI escape sequences
