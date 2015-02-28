@@ -76,7 +76,7 @@ struct {
 
 static void init_stash() {
     stash.bracecount = 0;
-    stash.state      = 0;
+    //stash.state      = 0;
     stash.mode       = PARSE;
     stash.lexeme     = CAR;
     stash.parseme    = SYMBOL;
@@ -84,9 +84,9 @@ static void init_stash() {
     stash.head       = false;
 }
 
-static void stash_state() {
+static void stash_parser() {
     stash.bracecount = bracecount;
-    stash.state      = state;
+    //stash.state      = state;
     stash.mode       = mode;
     stash.lexeme     = lexeme;
     stash.parseme    = parseme;
@@ -94,9 +94,9 @@ static void stash_state() {
     stash.head       = head;
 }
 
-static void restore_state() {
+static void restore_parser() {
     bracecount =  stash.bracecount;
-    state      =  stash.state;
+    //state      =  stash.state;
     mode       =  stash.mode;
     lexeme     =  stash.lexeme;
     parseme    =  stash.parseme;
@@ -190,7 +190,7 @@ static void gabber(char front) {
         if (gibber < GABMAX-1) {
             gab[++gibber] = front;
         } else {
-            //  color(RED); Serial.print('*'); color(RESET);
+            color(RED); Serial.print('*'); color(RESET);
             gibber = 1;
             gab[0] = gab[GABMAX-1];
             gab[1] = front;
@@ -216,12 +216,17 @@ static void backspace() {
     char modeset = mode;
     char gibset = 0;
     if (gibber >= 0) --gibber; // walk back to last cha
-    if (gab[gibber] == '(') {
-        --bracecount;
-    }
-    if (gab[gibber] == ')')
-        ++bracecount;
+    /*    if (gab[gibber] == '(') {
+            --bracecount;
+        }
+        if (gab[gibber] == ')') {
+            ++bracecount;
+        } */
+    restore_parser(); // we stash at every newline
     mode = PRINT;
+    Serial.print('\r\33[J'); // return and clear line
+    gibset = gibber -1 ;
+    gibber = -1;
     do {
         dancer(gab[gibber]); // +1?
     } while (gibber < gibset);
@@ -303,7 +308,9 @@ parse:
             goto parse;
             break;
         case '\r' :
+            stash_parser(); // enables delete key
             phoneme = SPACE;
+            
             //<diagnostic>
             clear();
             Serial.print("\r\n"); //jumpcall
@@ -422,8 +429,8 @@ send_bite:
     } else {
         Serial.print("\33[24m");
     }
-    Serial.print(gab[gibber]);
-
+//    Serial.print(gab[gibber]); // this fails with PRINT which may be a more
+    Serial.print(bite);          // subtle error
 next:
     was_cha = phoneme;
     if (!head && was_cha & GLYPH) {
@@ -436,8 +443,8 @@ void setup() {
     gab[0] = '(';
     drp[0] = '(';
     state = 0;
-    stash.init();           // these two set up
-    restore_state();        // our parsing engine 
+    init_stash();           // these two set up
+    restore_parser();        // our parsing engine
     Serial.begin(9600);
 }
 

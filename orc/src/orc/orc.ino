@@ -190,7 +190,9 @@ static void gabber(char front) {
         if (gibber < GABMAX-1) {
             gab[++gibber] = front;
         } else {
-            //  color(RED); Serial.print('*'); color(RESET);
+            color(RED);
+            Serial.print('*');
+            color(RESET);
             gibber = 1;
             gab[0] = gab[GABMAX-1];
             gab[1] = front;
@@ -216,15 +218,16 @@ static void backspace() {
     char modeset = mode;
     char gibset = 0;
     if (gibber >= 0) --gibber; // walk back to last cha
-    if (gab[gibber] == '(') {
-        --bracecount;
-    }
-    if (gab[gibber] == ')') {
-        ++bracecount;
-    }
-    restore_parser(); // we (will) stash at every newline
+    /*    if (gab[gibber] == '(') {
+            --bracecount;
+        }
+        if (gab[gibber] == ')') {
+            ++bracecount;
+        } */
+    restore_parser(); // we stash at every newline
     mode = PRINT;
-    Serial.print("\r\n");
+    Serial.print('\r');      // return 
+    Serial.print("\33[K");   // clear line
     gibset = gibber -1 ;
     gibber = -1;
     do {
@@ -308,8 +311,9 @@ parse:
             goto parse;
             break;
         case '\r' :
-            phoneme = SPACE;
             stash_parser(); // enables delete key
+            phoneme = SPACE;
+
             //<diagnostic>
             clear();
             Serial.print("\r\n"); //jumpcall
@@ -428,8 +432,8 @@ send_bite:
     } else {
         Serial.print("\33[24m");
     }
-    Serial.print(gab[gibber]);
-
+//    Serial.print(gab[gibber]); // this fails with PRINT which may be a more
+    Serial.print(bite);          // subtle error
 next:
     was_cha = phoneme;
     if (!head && was_cha & GLYPH) {
