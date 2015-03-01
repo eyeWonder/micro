@@ -1,3 +1,6 @@
+#include <avr/io.h>
+
+
 // colors are semantic.
 #define BLACK      0        // doubt I'll use this...
 #define RED        1
@@ -110,7 +113,7 @@ char gibber = 0;
 char derp = 0;
 char was_cha = 0;
 
-bool online = true ; // useless replace with state
+bool online = false ; // useless replace with state
 
 static void color(char foreground) { // prints a foreground color, for now
     // bum: bitfield: @@@@$$$$
@@ -220,7 +223,7 @@ static void backspace() {
     restore_parser(); // we stash at every newline
     mode = PRINT;
     Serial.print("\r\33[K");   // return and clear line
-    if (gibber >= 0) {
+    if (gibber >= 0) { // reparse entire line
         gibset = gibber -1;
     } else {
         return;
@@ -228,10 +231,10 @@ static void backspace() {
     gibber = 0;
     if (gibset > 0) {
         do {
-            dancer(gab[gibber]); // +1?
+            dancer(gab[gibber]); // print all but one
         } while (gibber < gibset);
     }
-    gibber--;
+    gibber--; // delete character
     mode = modeset;
 }
 
