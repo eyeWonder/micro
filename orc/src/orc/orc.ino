@@ -364,7 +364,12 @@ parse:
         // handle ANSI escape sequences
         // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
+        gibber--;
         Serial.print('*');
+        if (bite <= 64 || bite >= 126 ) { // final character test
+            parseme = SYMBOL ;
+            goto next;
+        }
         break;
     case JANK:
         // handle 'jank64' encoding.
