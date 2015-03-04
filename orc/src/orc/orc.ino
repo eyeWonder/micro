@@ -1,13 +1,13 @@
 // colors are semantic.
-#define BLACK      0        // doubt I'll use this...
+#define BLACK      0
 #define RED        1
 #define GREEN      2
 #define YELLOW     3
 #define BLUE       4
 #define MAGENTA    5
 #define CYAN       6
-#define WHITE      7        // or this
-#define RESET      9        // preferring this.
+#define WHITE      7
+#define RESET      9
 
 #define GABMAX     64       // not found in blitzen
 #define DRPMAX     64
@@ -312,10 +312,9 @@ parse:
         case '\r' :
             stash_parser(); // enables delete key
             phoneme = SPACE;
-
             //<diagnostic>
             clear();
-            Serial.print("\r\n"); //jumpcall
+            Serial.print("\r\n");
             for (byte i = 0 ; i < gibber; i++) {
                 Serial.print(char(gab[i]));
             }
@@ -326,6 +325,10 @@ parse:
         case ' ' :
             phoneme = SPACE;
             head = false;
+            break;
+        case '\33' :
+            parseme = ESCAPE; // filters escapes without changing state
+            goto parse;
             break;
         }
         break;
@@ -361,6 +364,7 @@ parse:
         // handle ANSI escape sequences
         // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
+        Serial.print('*');
         break;
     case JANK:
         // handle 'jank64' encoding.
