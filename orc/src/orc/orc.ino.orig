@@ -364,10 +364,29 @@ parse:
         // handle ANSI escape sequences
         // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
+        gibber--;
         Serial.print('*');
-        if (bite <= 64 || bite >= 126 ) { // final character test
-            parseme = SYMBOL ;
-            goto next; 
+        if (bite = '\33') {
+            phoneme = OUTOFBAND;
+            goto next;
+        }
+        if (was_cha == OUTOFBAND) { // second character test
+        if (bite == '[') {
+            phoneme = RUNE;   // mildly semantic reuse
+            goto next;
+        } else {
+            parseme = SYMBOL;
+            goto next;
+        }
+    }
+    if (was_cha = RUNE) {
+            if (bite <= 64 || bite >= 126 ) { // final character test
+                parseme = SYMBOL ;
+                goto next;
+            }
+        } else {
+            phoneme = RUNE;
+            goto next;
         }
         break;
     case JANK:
