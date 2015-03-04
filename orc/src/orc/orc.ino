@@ -108,7 +108,7 @@ char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
 char derp = 0;
-char was_cha = 0;
+unsigned char was_cha = 0;
 
 bool online = true ; // useless replace with state
 
@@ -365,7 +365,7 @@ parse:
         // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
 //        Serial.print('*');
-//        Serial.print(int(was_cha));
+
         if (bite == '\33') {
             Serial.print('&');
             phoneme = OUTOFBAND;
