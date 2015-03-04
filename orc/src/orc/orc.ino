@@ -377,15 +377,21 @@ parse:
                 phoneme = RUNE;   // mildly semantic reuse
                 goto next;
             } else {
-                parseme = SYMBOL;
-                goto next;
+                //parseme = SYMBOL;
+                //goto next;
+                gibber+= 2 ; // otherwise we delete when
+                backspace(); // we restore parser state ^_^
+                return; 
             }
         }
         if (was_cha == RUNE) {
 //           Serial.print('^');
             if (bite >= 64 || bite <= 126 ) { // final character test
-                parseme = SYMBOL ;
-                goto next;
+               // parseme = SYMBOL ;
+               // goto next;
+                gibber += 2;
+                backspace();
+                return;
             }
         } else {
             phoneme = RUNE;
