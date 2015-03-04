@@ -271,6 +271,9 @@ parse:
         backspace();
         return;
     }
+    if (bite == '\33') {
+        parseme = ESCAPE; // filters escapes without changing state
+    }
     switch (parseme) {
     case SYMBOL:         // parseme == symbol
         if ('0' <= bite && bite <= '9') {
@@ -325,10 +328,6 @@ parse:
         case ' ' :
             phoneme = SPACE;
             head = false;
-            break;
-        case '\33' :
-            parseme = ESCAPE; // filters escapes without changing state
-            goto parse;
             break;
         }
         break;

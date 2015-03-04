@@ -271,6 +271,9 @@ parse:
         backspace();
         return;
     }
+    if (bite == '\33') {
+        parseme = ESCAPE; // filters escapes without changing state
+    }
     switch (parseme) {
     case SYMBOL:         // parseme == symbol
         if ('0' <= bite && bite <= '9') {
@@ -326,73 +329,69 @@ parse:
             phoneme = SPACE;
             head = false;
             break;
-        case '\33' :
-            parseme = ESCAPE; // filters escapes without changing state
-            goto parse;
+        }
             break;
-        }
-        break;
-    case NUMBER:
-        if (!('0' <= bite) || !(bite <= '9')) {
-            parseme = SYMBOL;
-            goto parse;
-        }
-        break;
-    case STRING: // include escaping logic, for now, close on "
-        if (phoneme == RUNE) {
-            phoneme = QUOTE; // this reclasses the initial `"`
-        } else {
-            if (bite == '"') {
+        case NUMBER:
+            if (!('0' <= bite) || !(bite <= '9')) {
                 parseme = SYMBOL;
-                color(YELLOW);
-                goto send_bite;
-            } else phoneme = QUOTE;
-        }
-        break;
-    case COMMENT:
-        if (bite == '\r') {
-            parseme = SYMBOL;
-            goto parse;
-        }
-        if (bite == ';') {
-            color(BLACK);
-            goto send_bite;
-        }
-        phoneme;
-        break;
-    case ESCAPE:
-        // handle ANSI escape sequences
-        // 'minimal compliance'
-        // see http://en.wikipedia.org/wiki/ANSI_escape_code
-//        Serial.print('*');
-gibber--;
-        if (bite == '\33') {
-//            Serial.print('&');
-            phoneme = OUTOFBAND;
-//            was_cha = OUTOFBAND; // should be equiv?
-            goto next;
-        }
-        if (was_cha == OUTOFBAND) { // second character test
- //           Serial.print('!');
-            if (bite == '[') {
-                phoneme = RUNE;   // mildly semantic reuse
-                goto next;
+                goto parse;
+            }
+            break;
+        case STRING: // include escaping logic, for now, close on "
+            if (phoneme == RUNE) {
+                phoneme = QUOTE; // this reclasses the initial `"`
             } else {
+                if (bite == '"') {
+                    parseme = SYMBOL;
+                    color(YELLOW);
+                    goto send_bite;
+                } else phoneme = QUOTE;
+            }
+            break;
+        case COMMENT:
+            if (bite == '\r') {
                 parseme = SYMBOL;
+                goto parse;
+            }
+            if (bite == ';') {
+                color(BLACK);
+                goto send_bite;
+            }
+            phoneme;
+            break;
+        case ESCAPE:
+            // handle ANSI escape sequences
+            // 'minimal compliance'
+            // see http://en.wikipedia.org/wiki/ANSI_escape_code
+//        Serial.print('*');
+            gibber--;
+            if (bite == '\33') {
+//            Serial.print('&');
+                phoneme = OUTOFBAND;
+//            was_cha = OUTOFBAND; // should be equiv?
                 goto next;
             }
-        }
-        if (was_cha == RUNE) {
- //           Serial.print('^');
-            if (bite >= 64 || bite <= 126 ) { // final character test
-                parseme = SYMBOL ;
+            if (was_cha == OUTOFBAND) { // second character test
+//           Serial.print('!');
+                if (bite == '[') {
+                    phoneme = RUNE;   // mildly semantic reuse
+                    goto next;
+                } else {
+                    parseme = SYMBOL;
+                    goto next;
+                }
+            }
+            if (was_cha == RUNE) {
+//           Serial.print('^');
+                if (bite >= 64 || bite <= 126 ) { // final character test
+                    parseme = SYMBOL ;
+                    goto next;
+                }
+            } else {
+                phoneme = RUNE;
                 goto next;
             }
-        } else {
-            phoneme = RUNE;
-            goto next;
-        }
-        break;
+            break;
     case JANK:
         // handle 'jank64' encoding.
         break;
