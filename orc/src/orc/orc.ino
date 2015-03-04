@@ -365,15 +365,15 @@ parse:
         // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
 //        Serial.print('*');
-
+        gibber--;
         if (bite == '\33') {
-            Serial.print('&');
+//            Serial.print('&');
             phoneme = OUTOFBAND;
-            was_cha = OUTOFBAND; // should be equiv?
+//            was_cha = OUTOFBAND; // should be equiv?
             goto next;
         }
         if (was_cha == OUTOFBAND) { // second character test
-            Serial.print('!');
+//           Serial.print('!');
             if (bite == '[') {
                 phoneme = RUNE;   // mildly semantic reuse
                 goto next;
@@ -383,7 +383,7 @@ parse:
             }
         }
         if (was_cha == RUNE) {
-            Serial.print('^');
+//           Serial.print('^');
             if (bite >= 64 || bite <= 126 ) { // final character test
                 parseme = SYMBOL ;
                 goto next;
