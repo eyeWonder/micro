@@ -2,15 +2,15 @@
 
 
 // colors are semantic.
-#define BLACK      0        // doubt I'll use this...
+#define BLACK      0
 #define RED        1
 #define GREEN      2
 #define YELLOW     3
 #define BLUE       4
 #define MAGENTA    5
 #define CYAN       6
-#define WHITE      7        // or this
-#define RESET      9        // preferring this.
+#define WHITE      7
+#define RESET      9
 
 #define GABMAX     64       // not found in blitzen
 #define DRPMAX     64
@@ -111,7 +111,7 @@ char gab[GABMAX];
 char drp[DRPMAX];
 char gibber = 0;
 char derp = 0;
-char was_cha = 0;
+unsigned char was_cha = 0;
 
 bool online = false ; // useless replace with state
 
@@ -218,6 +218,9 @@ static void herpderp(char front) {
 void dancer(char bite) ;
 
 static void backspace() {
+    //there is a subtle bug here
+    // it causes (e% Fu... to reprint as 
+    // (%% Fu... 
     char modeset = mode;
     char gibset = 0;
     restore_parser(); // we stash at every newline
@@ -255,24 +258,31 @@ static bool rune(char cha) {
     return false;
 }
 
-void printabove(char above) {
-    // a helper function to print stuff above.
-    Serial.print("\33[A"); // up
-    Serial.print(above);
-    Serial.print("\33[D\33[B"); // back/down
+static bool out_of_band(unsigned char bite) {
+    if ((bite <= 31 && bite != '\r' && bite != '\33')
+            || (bite >= 128)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
+    if (out_of_band(bite)) {
+        return;
+    }
     phoneme = 0;
     gabber(bite);
 //     herpderp(bite);    // forget the derp for now
-
 parse:
     if (bite == 127) { // delete key
         backspace();
         return;
+    }
+    if (bite == '\33') {
+        parseme = ESCAPE; // filters escapes without changing state
     }
     switch (parseme) {
     case SYMBOL:         // parseme == symbol
@@ -315,10 +325,9 @@ parse:
         case '\r' :
             stash_parser(); // enables delete key
             phoneme = SPACE;
-
             //<diagnostic>
             clear();
-            Serial.print("\r\n"); //jumpcall
+            Serial.print("\r\n");
             for (byte i = 0 ; i < gibber; i++) {
                 Serial.print(char(gab[i]));
             }
@@ -362,8 +371,33 @@ parse:
         break;
     case ESCAPE:
         // handle ANSI escape sequences
-        // 'minimal compliance'
         // see http://en.wikipedia.org/wiki/ANSI_escape_code
+        gibber--;
+        if (bite == '\33') {
+            phoneme = OUTOFBAND;
+            goto next;
+        }
+        if (was_cha == OUTOFBAND) { // second character test
+            if (bite == '[') {
+                phoneme = RUNE;   // mildly semantic reuse
+                goto next;
+            } else {
+
+                gibber+= 2 ; // otherwise we delete when
+                backspace(); // we restore parser state ^_^
+                return;
+            }
+        }
+        if (was_cha == RUNE) {
+            if (bite >= 64 || bite <= 126 ) { // final character test
+                gibber += 2;
+                backspace();
+                return;
+            }
+        } else {
+            phoneme = RUNE;
+            goto next;
+        }
         break;
     case JANK:
         // handle 'jank64' encoding.
