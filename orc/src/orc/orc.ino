@@ -273,7 +273,6 @@ void dancer(char bite) { // first of the reindeer, 0.2
     phoneme = 0;
     gabber(bite);
 //     herpderp(bite);    // forget the derp for now
-
 parse:
     if (bite == 127) { // delete key
         backspace();
