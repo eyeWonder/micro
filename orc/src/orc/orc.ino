@@ -215,6 +215,9 @@ static void herpderp(char front) {
 void dancer(char bite) ;
 
 static void backspace() {
+    //there is a subtle bug here
+    // it causes (e% Fu... to reprint as 
+    // (%% Fu... 
     char modeset = mode;
     char gibset = 0;
     restore_parser(); // we stash at every newline
