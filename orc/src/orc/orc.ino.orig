@@ -252,16 +252,19 @@ static bool rune(char cha) {
     return false;
 }
 
-void printabove(char above) {
-    // a helper function to print stuff above.
-    Serial.print("\33[A"); // up
-    Serial.print(above);
-    Serial.print("\33[D\33[B"); // back/down
+static bool out_of_band(unsigned char bite) {
+    if ((bite <= 31 && bite != '\n' && bite != '\33')
+            || (bite >= 128)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
+    if out_of_band(bite) { return; }
     phoneme = 0;
     gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -330,68 +333,65 @@ parse:
             head = false;
             break;
         }
-            break;
-        case NUMBER:
-            if (!('0' <= bite) || !(bite <= '9')) {
+        break;
+    case NUMBER:
+        if (!('0' <= bite) || !(bite <= '9')) {
+            parseme = SYMBOL;
+            goto parse;
+        }
+        break;
+    case STRING: // include escaping logic, for now, close on "
+        if (phoneme == RUNE) {
+            phoneme = QUOTE; // this reclasses the initial `"`
+        } else {
+            if (bite == '"') {
                 parseme = SYMBOL;
-                goto parse;
-            }
-            break;
-        case STRING: // include escaping logic, for now, close on "
-            if (phoneme == RUNE) {
-                phoneme = QUOTE; // this reclasses the initial `"`
-            } else {
-                if (bite == '"') {
-                    parseme = SYMBOL;
-                    color(YELLOW);
-                    goto send_bite;
-                } else phoneme = QUOTE;
-            }
-            break;
-        case COMMENT:
-            if (bite == '\r') {
-                parseme = SYMBOL;
-                goto parse;
-            }
-            if (bite == ';') {
-                color(BLACK);
+                color(YELLOW);
                 goto send_bite;
-            }
-            phoneme;
-            break;
-        case ESCAPE:
-            // handle ANSI escape sequences
-            // 'minimal compliance'
-            // see http://en.wikipedia.org/wiki/ANSI_escape_code
-//        Serial.print('*');
-            gibber--;
-            if (bite == '\33') {
-//            Serial.print('&');
-                phoneme = OUTOFBAND;
-//            was_cha = OUTOFBAND; // should be equiv?
+            } else phoneme = QUOTE;
+        }
+        break;
+    case COMMENT:
+        if (bite == '\r') {
+            parseme = SYMBOL;
+            goto parse;
+        }
+        if (bite == ';') {
+            color(BLACK);
+            goto send_bite;
+        }
+        phoneme;
+        break;
+    case ESCAPE:
+        // handle ANSI escape sequences
+        // see http://en.wikipedia.org/wiki/ANSI_escape_code
+        gibber--;
+        if (bite == '\33') {
+            phoneme = OUTOFBAND;
+            goto next;
+        }
+        if (was_cha == OUTOFBAND) { // second character test
+            if (bite == '[') {
+                phoneme = RUNE;   // mildly semantic reuse
                 goto next;
-            }
-            if (was_cha == OUTOFBAND) { // second character test
-//           Serial.print('!');
-                if (bite == '[') {
-                    phoneme = RUNE;   // mildly semantic reuse
-                    goto next;
-                } else {
-                    parseme = SYMBOL;
-                    goto next;
-                }
-            }
-            if (was_cha == RUNE) {
-//           Serial.print('^');
-                if (bite >= 64 || bite <= 126 ) { // final character test
-                    parseme = SYMBOL ;
-                    goto next;
-                }
             } else {
-                phoneme = RUNE;
-                goto next;
+
+                gibber+= 2 ; // otherwise we delete when
+                backspace(); // we restore parser state ^_^
+                return;
             }
-            break;
+        }
+        if (was_cha == RUNE) {
+            if (bite >= 64 || bite <= 126 ) { // final character test
+                gibber += 2;
+                backspace();
+                return;
+            }
+        } else {
+            phoneme = RUNE;
+            goto next;
+        }
+        break;
     case JANK:
         // handle 'jank64' encoding.
         break;

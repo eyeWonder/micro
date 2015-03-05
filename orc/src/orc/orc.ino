@@ -252,16 +252,21 @@ static bool rune(char cha) {
     return false;
 }
 
-void printabove(char above) {
-    // a helper function to print stuff above.
-    Serial.print("\33[A"); // up
-    Serial.print(above);
-    Serial.print("\33[D\33[B"); // back/down
+static bool out_of_band(unsigned char bite) {
+    if ((bite <= 31 && bite != '\r' && bite != '\33')
+            || (bite >= 128)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void dancer(char bite) { // first of the reindeer, 0.2
 // dancer is a colorful parser.
 // dancer consumes one letter at a time.
+    if (out_of_band(bite)) {
+        return;
+    }
     phoneme = 0;
     gabber(bite);
 //     herpderp(bite);    // forget the derp for now
@@ -375,7 +380,7 @@ parse:
 
                 gibber+= 2 ; // otherwise we delete when
                 backspace(); // we restore parser state ^_^
-                return; 
+                return;
             }
         }
         if (was_cha == RUNE) {
