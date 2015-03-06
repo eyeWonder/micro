@@ -1,6 +1,4 @@
 #include <avr/io.h>
-
-
 // colors are semantic.
 #define BLACK      0
 #define RED        1
@@ -48,6 +46,7 @@
 #define EVAL   2
 #define PRINT  4
 #define EDIT   8
+
 
 /*
 typedef slot {  // holds userdata
@@ -219,8 +218,8 @@ void dancer(char bite) ;
 
 static void backspace() {
     //there is a subtle bug here
-    // it causes (e% Fu... to reprint as 
-    // (%% Fu... 
+    // it causes (e% Fu... to reprint as
+    // (%% Fu...
     char modeset = mode;
     char gibset = 0;
     restore_parser(); // we stash at every newline
