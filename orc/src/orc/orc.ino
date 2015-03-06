@@ -1,5 +1,8 @@
 #include <avr/io.h>
 // colors are semantic.
+
+#define BYTE uint_least8_t
+
 #define BLACK      0
 #define RED        1
 #define GREEN      2
@@ -54,25 +57,26 @@ typedef slot {  // holds userdata
  // with type table, one bit per
 }
 */
+// move to data section
 const char HI[] = "@rk!";
 const char CLR[] = "\33[30m";
 
 // these will not need inits
-char bracecount;
-char state;                // online or not
-char mode;                // parse/eval/edit/etc.
-char lexeme;              // place in symbol order.
-char parseme;              // parser at work
-char phoneme;
+BYTE bracecount;
+BYTE state;                // online or not
+BYTE mode;                // parse/eval/edit/etc.
+BYTE lexeme;              // place in symbol order.
+BYTE parseme;              // parser at work
+BYTE phoneme;
 bool head;           // head or tail of symbol
 
 struct {
-    char bracecount;
-    char state;
-    char mode;
-    char lexeme;
-    char parseme;
-    char phoneme;
+    BYTE bracecount;
+    BYTE state;
+    BYTE mode;
+    BYTE lexeme;
+    BYTE parseme;
+    BYTE phoneme;
     bool head;
 } stash;
 
